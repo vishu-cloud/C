@@ -1,32 +1,29 @@
 /*
 last check up 
-03/08/2011
+11/01/2012
 ------------
 
        _____________
       (             )
       (____________ )
        |           |
-       |           |
        |           |  
        |           |
       /             \
-     /               \ 
-    /                 \  
-   /                   \
-  /                     \
-  (______________________) 
-  |                      |
-  |   ...:::Beer:::...   |
-  |...::::Version:0.01::.|
-  |                      |
-  |______________________|
-  |                      |
-  |                      |
-  |                      |
-  |                      |
-  |                      |
-  (______________________)
+     /               \  
+   /                  \
+  (___________________) 
+  |                   |
+  |   ...:::Beer:::   |
+  |..::Version:0.04::.|
+  |                   |
+  |___________________|
+  |                   |
+  |                   |
+  |                   |
+  |                   |
+  |                   |
+  (___________________)
 0101010101010110101010101010101101010101010   
 
 is held by Apache license 2.0
@@ -38,8 +35,8 @@ E-mail: c00f3r[at]gmail[dot]com
 date: 03/08/2011
 
 thanks: 
-  _mlk_,
-  I4K("for cool macros and other things"),
+  _mlk_,m0nad,
+  I4K,sigsegv,b-man
   delfo,c0lt7r,B4r0n,joey,fokerbug,
   zepplin,voidpointer,muzgo,memset,b4r0n,novato_br...
 
@@ -102,7 +99,7 @@ char * dec2bin(int n, char * string)
 // Hexadecimal to Character
 
 // with bitwise
-Hex2Char(char *Hex)
+char Hex2Char(char *Hex)
 {
  char rch=0;
  int i=0; 
@@ -274,6 +271,20 @@ int bit_sqrt(int num)
  return result;
 }
 
+// test if is palindrome
+int palindrome(const char *s)
+{
+  int x,y;
+  
+  y = strlen(s);
+  for(x=0; x<y/2; x++)
+  {
+   if( s[x] != s[y-x-1] ) 
+    return 0; 
+  }
+  return 1;
+}
+
 // return time
 // example OutPut Wed Aug  3 18:26:24 2011
 char *TimeNow()
@@ -286,7 +297,7 @@ char *TimeNow()
  return asctime(local);
 }
 
-// File jobs  ##############################################################
+// Files jobs  ##############################################################
 int CopyFile(char *fromfile, char *tofile)
 {
  FILE *ifp, *ofp;
@@ -329,15 +340,17 @@ const char *readLine(char * NameFile)
 {
  FILE * file;
  file = fopen(NameFile, "r");
- if (file == NULL)
+ if(!file)
+ {
+  DEBUG("error in file"); 	 
   return;
-
+ }
  char *lineBuffer=calloc(1,1), line[128];
 
- if( !file || !lineBuffer )
+ if(!lineBuffer)
  {
   DEBUG("error in readLine() at %s",NameFile);
-  exit(1);
+  return;
  }
 
  while(fgets(line,sizeof line,file))  
@@ -346,7 +359,7 @@ const char *readLine(char * NameFile)
   if(!lineBuffer)
   {
    DEBUG("error in readLine() at %s",NameFile);
-   exit(2);
+   return;
   }
   strcat(lineBuffer,line);
  }
@@ -354,14 +367,45 @@ const char *readLine(char * NameFile)
  return lineBuffer;
 }
 
-long getFileSize(const char *filename)
+// ListDir(directory_name_2_list,Max_chars)
+char *ListDir(char *file2list,int MAX)
 {
-  long result;
-  FILE *fh = fopen(filename, "r");
+ DIR *d;
+ struct dirent *dir;
+ char *ret=alloca(sizeof(char)*MAX);
+
+ d = opendir(file2list);
+ 
+ if(!d)
+ { 
+  DEBUG("error in directory");
+  return NULL;
+ }  
+
+ while((dir = readdir(d)) != NULL)
+ {    
+  strncat(ret,dir->d_name,strlen(dir->d_name));
+  strncat(ret,"\n",1);
+ }  
+
+ closedir(d);
+ return ret; 
+}   
+
+// return size of bytes on file , same to unix cmd "du -b file"
+long FileSize(const char *file)
+{
+  long ret;
+  FILE *fh = fopen(file, "r");
+  if(!fh)
+  {
+   DEBUG("error in file");
+   return 0;
+  }
   fseek(fh, 0, SEEK_END);
-  result = ftell(fh);
+  ret = ftell(fh);
   fclose(fh);
-  return result;
+  return ret;
 }
 
 
@@ -384,28 +428,29 @@ int sort_int(const void *a, const void *b)
  return (*a1 > *b1);
 }
 
+//example mergesort(a, 0, sizeof(a)/sizeof(i) - 1);
 void mergesort(int *array, size_t first, size_t last)
 {
  int middle;
-
+       
  if(first>=last)
   return;
-
+		
  middle = (first + last) / 2;
  mergesort(array, first, middle);
  mergesort(array, middle + 1, last);
 
  int *temp;
  size_t i = first,j = middle + 1,tp = 0;
- temp = (int *) malloc(sizeof(int) * (last - first + 1));
-
+ temp = (int *) alloca(sizeof(int) * (last - first + 1));
+	       
  while(i <= middle && j <= last)
  {
-if (array[i] <= array[j])
+  if(array[i] <= array[j])
   {
    temp[tp] = array[i];
    ++i;
-  }
+  }	
   else
   {
    temp[tp] = array[j];
@@ -413,30 +458,51 @@ if (array[i] <= array[j])
   }
   ++tp;
  }
-
+	
  while(j<=last)
  {
   temp[tp] = array[j];
   ++tp;
   j++;
- }
+ }		
  while(i<=middle)
  {
   temp[tp] = array[i];
   ++tp;
   i++;
  }
-
+	
  i=first;
  while(i<=last)
  {
   array[i] = temp[i - first];
   i++;
- }
+ }	
 
  free(temp);
 }
 
+void bubbleSort(void *p, int width, int N, int(*fptr)(const void *, const void *)) 
+{
+ int i, j, k;
+
+ unsigned char buf[256];
+ unsigned char *bp = p;
+
+  for (i = N-1; i >= 0; i--) 
+  {
+   for (j = 1; j <= i; j++) 
+   {
+    k = fptr((void *)(bp + width*(j-1)), (void *)(bp + j*width));
+    if(k > 0) 
+    {
+     memcpy(buf, bp + width*(j-1), width);
+     memcpy(bp + width*(j-1), bp + j*width , width);
+     memcpy(bp + j*width, buf, width);
+    }
+   }
+  }
+}
 
 
 // ########################### other functions
@@ -587,36 +653,44 @@ char *strrev(char *str)
  return str;
 }
 
-//simple split , char **b = split("bla la ca zo ?", ' '); pust(b[1])...
-char **split(char *str, char s)
-{
-  char **buff = NULL;
-  char word[515] = {0};
-  int nbrCase = 0;
-  int iWord;
-  int i;
-  
-  for(i = 0; str[i] != '\0'; i++)
-   if(str[i] == s)
-    nbrCase++;
-  nbrCase += 1;
-  
-  if(!(buff = alloca(sizeof(char *) * nbrCase)))
-   DEBUG("error in split()");
- 
-  for(i = 0, nbrCase = 0, iWord = 0; str[i] != '\0'; i++, iWord++)
-  {
-    word[iWord] = str[i];
-    if(str[i] == s)
-    {
-      if(!(buff[nbrCase] = alloca(sizeof(char) * strlen(word) + 1)))
-        DEBUG("error in split()");
-      strcpy(buff[nbrCase], word);
-      nbrCase++;
-      iWord = 0;
-      bzero(word, 515);
-    }
-  }
-  return buff;
-}
 
+// simple split return array of strings between string separator
+char **split(char *string, char separator, int arraySize)
+{
+ int inicio=0,count=2,i=0,x=0;
+ char **newarray;
+
+ while(string[i] != '\0')
+ {
+// numero de elementos que tera nosso array 
+  if(string[i]==separator)
+   count++;
+  i++;              
+ }
+
+ arraySize=count-1;
+ newarray=calloc(count,sizeof(char*));
+ i=0;
+
+ while(*string!='\0') 
+ {
+  if(*string==separator) 
+  {
+   newarray[i]=calloc(x-inicio+2,sizeof(char));
+   strncpy(newarray[i],string-x+inicio,x-inicio);
+   newarray[i][x-inicio+1]='\0'; 
+   inicio=x;
+   inicio++;
+   i++;
+  }
+  string++;
+  x++;
+ }
+        
+ newarray[i]=calloc(x-inicio+1,sizeof(char));
+ strncpy(newarray[i],string-x+inicio,x-inicio);
+ newarray[++i]=NULL;
+ 
+ return newarray;
+}
+  
