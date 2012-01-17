@@ -1,0 +1,254 @@
+Geralmente meio acadêmico da uma explicação de <strong><a href="http://pt.wikipedia.org/wiki/Ponteiro_%28programa%C3%A7%C3%A3o%29" title="wikipedia ponteiros" target="_blank">ponteiros</a></strong> deixando todos
+enrolados com apenas o básico , O que faz todos desviar do caminho dos ponteiros , 
+os poucos que usam são aqueles que tem sido autodidata ou fizeram algum curso, 
+Bom alguns livros tem exemplos bons de ponteiros como no livro Ansi C do 
+<strong>K&amp;R</strong>, entretanto a falta de popularidade de tais dicas torna tal assunto meio obscuro... 
+
+<strong>*Perguntas frenéticas</strong>
+Por que usar ponteiros ?
+ <strong>--Desempenho</strong> e maior manipulação dos dados
+E se eu não usar ?
+ <strong>--Na depuração</strong> de códigos <strong>STACK</strong> é bem complicada comparada com <strong>HEAP</strong>,
+   no tratamento de dados gigantes poderá ter algumas <strong>Traps Malditas!</strong>...
+<img src="http://nosgeeks.com.br/wp-content/uploads/2011/06/capa5.jpg" alt="freddy" />
+Outro ponto interessante,uma das diferenças de 64bit para 32bit, tanto em 
+64 como 32 tem 32bit em int , entretanto ponteiro tem 64bit em 64bit e em 
+32bit tem 32bit, reflita...
+<strong>vamos entender algumas práticas comuns de se ver depois partir para exemplos</strong>
+[sourcecode language="c"]
+ int i           //Int variável 'i'
+ int *p          //'P' ponteiro para um int
+ int a[]         //Matriz 'a' de Int
+ int f()         //'F' função com valor de retorno do tipo int
+ int **p         //'Pp' ponteiro para um ponteiro para um int
+ int (*pa)[]     //'Pa' ponteiro para um array de int
+ int (*pf)()     //pf ponteiro para uma função com valor de retorno int
+ int *p[]       //Array 'p' de ponteiros para um int
+ int *var()       //Função "var", que retorna um ponteiro para um int
+ int ***var       //'var' ponteiro para um ponteiro para um ponteiro para um int
+ int (**var)[]  //'var' ponteiro para um ponteiro para um array de int
+ int (**var)()  //'var' ponteiro para um ponteiro para uma função com valor de retorno do tipo int
+ int *(*c)[]  //'c' ponteiro para uma matriz de ponteiros para um int
+ int *(*c)()  //"c 'ponteiro para uma função com valor de retorno do tipo ponteiro para um int
+ int **app[]    //'App' ponteiro para um ponteiro para uma matriz de ponteiros para um int
+ int (*b[])[] //Uma série de 'b' ponteiros para um array de int
+ int (*c[])() /Um array 'c' ponteiros para uma função com valor de retorno do tipo int
+ int ***fpp()   //"Fpp 'função que retorna um ponteiro para um ponteiro para um ponteiro para um int
+ int (*fpa())[] //Função 'fpa ", que retorna um ponteiro para um array de int
+ int (*fpf())() //"FPF" função que retorna um ponteiro para uma função com valor de retorno int
+[/sourcecode]
+Fique calmo <strong>não é para decorar</strong> , tenha em mente leitura da esquerda para direita, 
+e sempre começando pelo nome da variável...
+
+Uma prática muito comum em C é usar <strong>void pointer</strong>, para muitos que estão 
+iniciando não é normal se ver, Entretanto estudando códigos de terceiros 
+pode-se ver muito , usar ponteiro colabora no <strong>desempenho</strong> e o código em 
+<strong>Assembly</strong> gerado fica menor de fato,um "<strong>disassemble main</strong>" no <a href="http://www.gnu.org/s/gdb/documentation/" title="GDB doc" target="_blank">GDB</a> pode te dar ponto
+empírico.
+<strong>
+um exemplo vale mais do que mil palavras</strong>
+
+[sourcecode language="c"]
+// exemplo void pointer by Cooler_
+#include <stdio.h>
+
+//ideia de polimorfismo 
+void foo(void *point,int size)
+{
+// int == 4 bytes
+ if(size==sizeof(int))
+//tem que fazer casting do ponteiro para STDOUT
+  printf("int : %d , bytes: %d\n",*(int *)point,sizeof(point));
+
+// double == 8 bytes
+ if(size==sizeof(double))
+//casting de novo para o write(1...
+  printf("double : %f , bytes: %d\n",*(double *)point,sizeof(double));
+}
+
+int main()
+{
+ int a=64;
+ double b=3.14;
+
+ printf("bytes do void : %d\n",sizeof(void));
+// & usamos para dizer o endereço da memória de determinada variável
+ foo(&a,sizeof(int));
+ foo(&b,sizeof(double));
+
+ return 0;
+}
+[/sourcecode]
+outro exemplo seguindo a mesma lógica
+
+[sourcecode language="c"]
+#include <stdio.h>
+#include <string.h>
+
+typedef struct _myst
+{
+ int a;
+ char b[10];
+}myst;
+
+void func(myst *mt)
+{
+ printf("resposta %d %s \n",mt->a,mt->b);
+}
+
+int main()
+{
+ void (*resposta)(void *);
+
+ myst x;
+ x.a=4;
+ strncpy(x.b,"1234",8);
+ resposta = (void*)func;
+ resposta(&x);
+
+ return 0;
+}
+[/sourcecode]
+
+Outra prática muito vista é o "<strong>ponteiro de arrays para funções</strong>",
+<strong>vejamos terceiro exemplo:</strong>
+
+[sourcecode language="c"]
+// example pointer of arrays to function by Cooler_
+#include <stdio.h>
+#include <malloc.h>
+
+void foo1(int x)
+{
+ printf("int: %d\n",x);
+}
+
+void foo2(int x)
+{
+ printf("num: %d\n",x);
+}
+
+void foo3(int z)
+{
+ printf("result %d\n",z*z);
+}
+
+void func2func(void (*fp)(void *), void *q) 
+{
+  fp(q);
+}
+
+int main()
+{
+//se a função tiver mais de um argv use "," (int,char...
+ void (**list)(int);
+//alocamos 3 endereços na heap
+ list=(void *)malloc(3*sizeof(void *));
+
+ list[0]=foo1;
+ list[0](2);
+ list[1]=foo2;
+ list[1](4);
+ list[2]=foo3;
+ list[2](8);
+
+ // função para função lol
+ func2func(foo2, 4);
+
+ free(list);
+ return 0;
+}
+[/sourcecode]
+
+outro exemplo usando <strong>função com argumento para função</strong>
+
+[sourcecode language="c"]
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#define w printf 
+#define MAX_BUF 128 
+#define array_num(array) (sizeof(array) / sizeof *(array))
+   
+void bubble(void *p, int width, int N,int(*fptr)(const void *, const void *));
+int compara_letras(const void *m, const void *n);
+int compara_numeros(const void *m, const void *n);
+      
+int main()
+{
+ int lista[]={4,2,1,5,3,8,10,9,0,45};
+ char nomes[6][20] = {"Madruga","Arara","Zebra","Elefante","Babaca","Gato"};
+ short i;
+    
+ for(i=0; i<=array_num(lista)-1; i++) 
+  w("%d\n",lista[i]);
+ for(i=0; i<=array_num(nomes)-1; i++) 
+  w("%s\n",nomes[i]);
+ w("--------------\nagora dando buble sort nas listas\n");
+ bubble(lista, 4, 10, compara_numeros);
+ bubble(nomes, 20, 6, compara_letras);    
+ for(i=0; i<=9; i++) 
+  w("%d\n",lista[i]);
+ for(i=0; i<=5; i++)
+  w("%s\n",nomes[i]);
+
+ return 0;
+}
+
+// função com argumento para função 
+void bubble(void *p, int width, int N, int(*fptr)(const void *, const void *))
+{
+ int i, j, k;
+ unsigned char buf[MAX_BUF];
+ unsigned char *bp = p;
+  for(i = N-1; i >= 0; i--)
+  {
+   for(j = 1; j <= i; j++)
+   {
+//repare que fptr é a função escolhida pelo usuário
+    k = fptr((void *)(bp + width*(j-1)), (void *)(bp + j*width));
+    if(k > 0)
+    {
+     memcpy(buf, bp + width*(j-1), width);
+     memcpy(bp + width*(j-1), bp + j*width , width);
+     memcpy(bp + j*width, buf, width);
+    }
+   }
+  }
+}
+//comparando letras graças "strcmp" função da lib "string.h"
+  int compara_letras(const void *m, const void *n)
+  {
+   char *m1 = (char *)m;
+   char *n1 = (char *)n;
+   return (strcmp(m1,n1));
+  }
+//comparando numeros
+  int compara_numeros(const void *m, const void *n)
+  {
+   long *m1, *n1;
+   m1 = (long *)m;
+   n1 = (long *)n;
+   return (*m1 > *n1);
+  }
+[/sourcecode]
+
+tem muitas dicas sobre o mesmo por ai,
+mas vou dar uma <strong>sugestão de leitura</strong>
+caso queira melhorar ainda mais em ponteiros
+famoso <strong>livro da truta</strong> :-)
+<a href="http://www.amazon.com/Expert-Programming-Peter-van-Linden/dp/0131774298" title="livro expert C" target="_blank"><img src="http://ecx.images-amazon.com/images/I/41186C2QEZL._SL500_AA300_.jpg" alt="expert C" /></a>
+
+espero ter ajudado ;-)
+
+
+
+
+
+
+
+
+
+
+
+
