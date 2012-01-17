@@ -117,7 +117,7 @@ int init_sock(int serversock,int port)
    DEBUG("Erro no socket");
  
    /* monta o endereço */
- bzero(&self, sizeof(self));
+ memset(&self, 0, sizeof(self));
  self.sin_family=AF_INET;
  self.sin_port=htons(port);
  self.sin_addr.s_addr=INADDR_ANY; /* uso o endereço do host */
@@ -146,7 +146,7 @@ void *request(void * sock)
  char **URL=(char **)xmalloc(8*sizeof(char *));
  char **POST=(char **)xmalloc(4*sizeof(char *));
 
-  bzero(&clientaddr, sizeof(clientaddr));
+  memset(&clientaddr, 0, sizeof(clientaddr));
   clientaddr.sin_family=AF_INET;
   clientaddr.sin_port=htons(port);
   clientaddr.sin_addr.s_addr=INADDR_ANY; 
