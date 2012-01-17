@@ -71,6 +71,12 @@ thanks:
 #define CLR_MFLAG(N, F)       ( (N) &= ~(F) )
 #define GET_MFLAG(N, F)       ( (N) & (F) )
 
+// Prints File Name/ Current Line , by utroz
+#define DESCRIPTION "File Name:(%s) | Current Line:(%d)\n"
+#define FILE_INFO PUT_BEER(DESCRIPTION, __FILE__, __LINE__)
+#define PRINT_(...) fprintf(stderr, __VA_ARGS__)
+#define PUT_BEER(buffer, ...) PRINT_ (buffer, __VA_ARGS__)
+
 #define BUGVIEW 1
 
 #define DEBUG(x, s...) do { \
@@ -166,6 +172,82 @@ unsigned long hex2int(char *a, unsigned int len)
   i++;
  }
  return val;
+}
+
+
+/* Utroz Functions to Beer.h open source project.
+ * Custom Functions 
+ * GET_BEER: Function avoids buffer overflow.
+ * PUT_BEER: Custom print.
+ * FILE_INFO: Shows info about a file(name, current line)
+ */  
+
+/* :: RESULT ::
+ * GET_BEER(buffer_, 15): Testing function against buffer overflow! It's right.
+ * PUT_BEER("%d %s\n", 1, buffer_): 1 Testing functiou
+ * FILE_INFO: File Name:(test.c) | Current Line:(35)
+ */
+
+unsigned int
+GET_BEER(char *buffer, size_t size)				
+{
+    signed char c;					
+    unsigned register i;	
+	
+    for(i = 0; i < size && (c = getchar()) != EOF 
+	&& c != '\n'; i++)	 			
+	buffer[i] = c;	
+    
+    if(c == '\n') buffer[i] = c;			
+    buffer[i+1] = '\0';	
+
+    /* Return amount of characters read
+     * Case occur a buffer overflow 
+     * the function will return -1 */ 
+    return (i > size)? -1 : i; 
+}
+		
+
+/* 
+this function made by utroz
+mailto:utroz@oakcoders.com
+ 
+ binary_str and  binary_view
+How to use (Example): binary_str("String Test");
+ CHAR           BINARY          ASCII
+(char)-> S |(bin)-> 01010011 |(dec)-> 83
+(char)-> t |(bin)-> 01110100 |(dec)-> 116
+(char)-> r |(bin)-> 01110010 |(dec)-> 114
+(char)-> i |(bin)-> 01101001 |(dec)-> 105
+(char)-> n |(bin)-> 01101110 |(dec)-> 110
+(char)-> g |(bin)-> 01100111 |(dec)-> 103
+(char)->   |(bin)-> 00100000 |(dec)-> 32
+(char)-> T |(bin)-> 01010100 |(dec)-> 84
+(char)-> e |(bin)-> 01100101 |(dec)-> 101
+(char)-> s |(bin)-> 01110011 |(dec)-> 115
+(char)-> t |(bin)-> 01110100 |(dec)-> 116
+*/
+ 
+char * binary_view (char *buffer, unsigned char bits)
+{
+    register i, j;
+   
+    for (i = 0, j = 8; i < 8; bits >>= 1, i++)
+        buffer[--j] = (bits & 0x1) + '0';    
+   
+    return buffer;
+}
+ 
+void binary_str (char *args)
+{
+    char buffer[9] = { 0 };
+   
+    puts(" CHAR\t\tBINARY\t\tASCII");
+    while (*args) {
+        printf("(char)-> %c |(bin)-> %s |(dec)-> %d\n",
+               *args, binary_view(buffer, *args), *args);
+        args++;
+    }
 }
 
 
