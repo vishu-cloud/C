@@ -1,0 +1,399 @@
+Vou ser bem retórico, missão aqui é abrir vários arquivos 
+"<strong>.xls</strong>"(extensão de arquivos do excel) que contenham a mesma 
+tabela,passar para <strong>XML</strong> e depois dar parser para dar "<strong>INSERT</strong>" 
+em  algum <strong>DB</strong>.
+
+Justificativa da missão ,ano passado por 3 vezes eu
+peguei freelancer de portar tabelas de "<strong>excel</strong>" para 
+algum <strong>SGBD</strong>, muita gente reclamando para mim que 
+gostaria de saber como o fazer e tudo mais foi outro 
+motivo, muitos clientes por falta de tempo e de estudo
+preferem usar "excel" do que DB,pessoal de contabilidade
+principalmente ,só olham para possibilidade de usar
+banco de dados quando se tem <strong>milhares de tabelas do excel 
+para se alterar etc</strong>, Isso é o que mantem os estagiários em
+algumas empresas,mas se perde muito tempo e dinheiro com
+isso fora  tendinite que dá nos estagiários :-( 
+<!--more-->
+Muitos <strong>usuários</strong> me disseram que só poderia ser feito com <strong>C#,VB
+outras linguagens do clube da janelinha</strong>,bom <strong>na real da para fazer</strong> 
+até em <strong>ASM</strong>. o.O  só é preciso<strong> insanidade</strong> para fazer :-D
+
+<strong>"Como eu adoro o Excel" cof cof argh! Bazinga!!!</strong> :-D
+
+Sim eu não gosto de manipular nada que tenha rotulo EULA 
+na testa,tanto que prefiro o Open-Office , mas abrir o Open-Office 
+N vezes e dar <strong>"ctrl+c e shift+insert"</strong> para cada <strong>célula</strong>,  
+preencher formulário ou editar um  "<strong>INSERT</strong>" na unha, não me 
+parece ser algo muito nobre.
+
+<strong>bom vamos a automatização </strong>
+<img src="http://desmond.imageshack.us/Himg850/scaled.php?server=850&amp;filename=botay.png&amp;res=medium" alt="fixbot" />
+
+
+Vamos tentar<strong> automatizar</strong> essa tarefa chata, assim quem sabe
+dê tempo de ler algum livro ,fazer algo produtivo e que
+faça valer o uso do seu cérebro,quem sabe prestigiar de uma
+boa breja gelada.
+
+<strong>Primeiro Passo</strong> , abstrair todos os arquivos "<strong>.xls</strong>" que tem
+a mesma tabela, e colocar em uma pasta,criar uma  outra pasta
+para os "<strong>XML</strong>".
+
+[sourcecode language="perl"]
+#!/usr/bin/perl
+use strict;
+use warnings;
+# se ñ tiver este modulo de comando no terminal "# cpan -i XML::Excel"
+use XML::Excel;
+
+ my $pasta=$ARGV[0] || die "\nsiga o exemplo\n./script local_xls_files xml_out_file\ncoded by Cooler_";
+ my $xmlFile=$ARGV[1];
+
+#abrimos a pasta de arquivos excel e vamos passar nome dos arquivos para um array
+ opendir(my $dh, $pasta) || die "$!";
+ my @arquivos=readdir($dh);
+ shift(@arquivos); #removendo primeiro elemento geralmente ".."
+ pop(@arquivos); #removendo último elemento "."
+  foreach(@arquivos) 
+  {
+// $_ variável léxica do Perl cujo valor é o elemento atual do array
+   print "convertendo $_ para XML\n";
+   my %attr;
+   my $excel_obj = XML::Excel->new();
+   $excel_obj = XML::Excel->new(\%attr);
+   my $status = $excel_obj->parse_doc("$pasta/$_");
+   $status = $excel_obj->parse_doc("$pasta/$_", \%attr);
+   my $nome=$_;
+# trocamos a extensão de xls para xml e salvamos com mesmo nome
+   $nome =~ s/\.xls/\.xml/;
+# criamos os arquivos XML
+   $excel_obj->print_xml("$xmlFile/$nome", \%attr);
+  }
+ closedir($dh);
+[/sourcecode]
+
+executando:
+[sourcecode language="perl"]
+cooler@lisperian:~/Área de Trabalho/estante/excel$ perl excel.pl files out
+convertendo sirchaves2.xls para XML
+convertendo blah2.xls para XML
+convertendo trol.xls para XML
+...
+[/sourcecode]
+Bom <strong>XLS</strong> da pasta "files" convertidos para <strong>XML</strong> e estão na pasta "out"
+
+Nosso script é simples, ele abre a pasta "files" pega todos arquivos
+e converte para XML, assim fica fácil para dar parser. Tentei fazer
+em C esta parte mais infelizmente não achei nada relacionado, quando 
+abri o arquivo só teve blob então invés de abrir o <strong>Open-Office</strong> N vezes
+e salvar como XML eu preferi usar esse modulo do Perl o "<strong>XML::Excel</strong>".
+claro que se eu tive-se mais tempo teria conseguido fazer em <strong>C</strong>, voltando
+poderia mostrar o restante que foi implementado com <strong>Perl+DBI</strong>, mas
+esse não é o objetivo visto que no blog já tem muito material de Perl,
+bom vamos usar agora "<strong>libxml</strong>" para parser em C e "<strong>libDBI</strong>" para comunicação
+com o SGBD.
+
+Assim como no Perl,Vantagem de usar <strong>DBI</strong>(Database independent interface) 
+é o fato de que instalando um <strong>DBD</strong>"database driver" pode-se portar seu 
+código facilmente para outro SGBD, LibDBI funciona com <strong>Oracle,PostgreSQL,
+MySQL,SQLite</strong> entre outros, mudando apenas a <strong>DSN</strong> para conexão, e a query
+padrão do SGBD a escolher...
+
+vamos para o <strong>rock n roll</strong>, lembrando que vamos fazer em um OS unix like
+pode ser Linux,OpenSolaris,BSD* etc, escolha é clara já viu um <strong>JEDI </strong>
+lutar sem sabre! :-D
+
+<code># apt-get install libxml-dev libdbi-dev </code>
+em distros baseada em RPM, troque "dev" por "devel"
+BSDs e MAc use ports,gentoo emerge,arch pacman...
+
+Como SGBD eu escolhi o <strong>SQLite3</strong> pela sua simplicidade e por ser bem veloz,
+para coisas pequenas,bom para uma explanação...
+
+<code># apt-get install sqlite3 sqlite3-dev libdbd-sqlite3</code>
+Lembra do driver "DBD" então instalei para SQLite, se fosse
+um PostgreSQL por exemplo instalaria "<strong>libdbd-pgsql</strong>",Motivo da escolha
+por SQLite é simples, esse é um exemplo não tem necessidade de algo
+gigante.
+
+[sourcecode language="perl"]
+$ sqlite3 banco.db
+SQLite version 3.7.7 2011-06-23 19:49:22
+Enter ".help" for instructions
+Enter SQL statements terminated with a ";"
+sqlite>
+sqlite> create table funcionarios ( nome varchar(20), salario float,faltas int,id INTEGER PRIMARY KEY);
+[/sourcecode]
+lembrando que a tabela foi de acordo com as necessidades da tabela do "excel" , que no caso
+é composta por "nome,salario,faltas" apenas, algo simples mais para explanação do mesmo,
+o "id" tem  incrementação automática... 
+
+antes de ver o código vamos ver um pedaço do "XML" de uma das nossas tabelas
+[sourcecode language="xml"]
+   <record>
+		<tr1>nome</tr1>
+		<tr1>salario</tr1>
+		<tr1>faltas</tr1>
+	</record>
+	<record>
+		<tr2>madruga</tr2>
+		<tr2>800.00</tr2>
+		<tr2>14</tr2>
+...
+[/sourcecode]
+primeira tag "record" vamos dar um "break" e vamos pegar a partir da segunda,já 
+que os primeiros dados são apenas rótulos.
+
+olhando a tabela
+<img src="http://desmond.imageshack.us/Himg841/scaled.php?server=841&amp;filename=tabelacc.png&amp;res=medium" alt="tabelaexcel" />
+
+bom vamos ao nosso código agora em Linguagem C
+
+[sourcecode language="c"]
+/*
+author:Antonio Costa (Cooler_)
+e-mail:c00f3r[at]gmail[dot]com
+
+para compilar:
+$ gcc -o code code.c `xml2-config --cflags --libs` -ldbi
+$ sqlite3 banco.db
+sqlite> create table funcionarios ( nome varchar(20), salario float,faltas int,id INTEGER PRIMARY KEY);
+
+ideia é converter XML para um DB
+
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dbi/dbi.h>
+#include <libxml/xmlreader.h>
+
+#define BUF 32
+
+// número máximo de INSERTs
+#define MAX 1024
+
+#define BUGVIEW 1
+
+#define DEBUG(x, s...) do { \
+ if (!BUGVIEW) { break; } \
+ time_t t = time(NULL); \
+ char *d = ctime(&t); \
+ fprintf(stderr, "%.*s %s[%d] %s(): ", \
+ (int)strlen(d) - 1, d, __FILE__, \
+ __LINE__, __FUNCTION__); \
+ fprintf(stderr, x, ## s); \
+} while (0);
+
+typedef struct dados x;
+
+struct dados {
+ char nome[BUF];
+ char salario[BUF];
+ char falta[BUF]; 
+};
+
+char *StrRep(char *st,char *orig,char *repl,const int mim,int times);
+
+int main(int argc, char *argv[])
+{
+ dbi_conn conn;
+ dbi_result result;
+ const char *errmsg;
+ xmlTextReaderPtr reader;
+ int counter=0,VecPosition=0;
+
+ x array[MAX];
+ x *lista=array;
+
+  if(argc != 2) 
+   DEBUG("siga o exemplo:\n./code filename.xml\n");
+
+// iniciamos o DBI
+  dbi_initialize(NULL);
+
+//tipo do DBD vamos usar sqlite
+  conn = dbi_conn_new("sqlite3");
+// somente para SQLite os argv a seguir 
+
+// no ultimo argv coloque local onde esta o banco
+  dbi_conn_set_option(conn, "sqlite3_dbdir" , "/home/cooler/Área\ de\ Trabalho/estante/excel/");
+// nome do db
+  dbi_conn_set_option(conn, "dbname","banco.db");
+/*
+se fosse pgsql,oracle ou mysql... a DSN seria assim
+  conn = dbi_conn_new("mysql");  //nome do driver
+  dbi_conn_set_option(conn, "host", "localhost");
+  dbi_conn_set_option(conn, "username", "seu_login");
+  dbi_conn_set_option(conn, "password", "sua_senha_aqui");
+  dbi_conn_set_option(conn, "dbname", "nomeBanco");
+  dbi_conn_set_option(conn, "encoding", "user");
+*/
+
+//teste simples para testar a conexão com banco
+ if(dbi_conn_connect(conn) < 0) 
+ {
+  dbi_conn_error(conn, &errmsg);
+  DEBUG("log de erro da conexao  %s\n", errmsg);
+  dbi_shutdown();
+  return 1;
+ }
+  
+// abrimos o XML
+ reader = xmlNewTextReaderFilename(argv[1]);
+  if(!reader) 
+   DEBUG("ERRO na reader");
+ 
+// lemos a HASH table nomeTag => valor_entre_tag
+  while(xmlTextReaderRead(reader) == 1) 
+  {
+// nome da hash , se fose usar
+    const xmlChar *name;
+    name = xmlTextReaderConstName(reader);
+//    fprintf(stdout,"%s: ",name);
+    
+    if(xmlTextReaderHasValue (reader)) 
+    {
+//valor da hash
+     const xmlChar *value;
+     char *word;
+     value = xmlTextReaderConstValue (reader);
+     word=(char *)value; // cast simples
+//limpando o lixo do parse ,espaços em branco etc...
+     word=StrRep(word,"\n","",sizeof(word),5); 
+     word=StrRep(word,"\r","",sizeof(word),5);  
+     word=StrRep(word," ","",sizeof(word),20);
+     word=StrRep(word,"&#092;&#048;","",sizeof(word),5);  
+      if(strlen(word)>0)
+       fprintf(stdout,"--%s = %d\n", word,strlen(word)); 
+      if(strlen(word)!=0)
+      { 
+// atribuindo no struct de acordo com a posição 
+       switch(counter)
+       {
+        case 0:
+         strcpy(lista[VecPosition].nome,word);
+         break;
+ 
+        case 1:
+         strcpy(lista[VecPosition].salario,word);
+         break;
+ 
+        case 2:
+         strcpy(lista[VecPosition].falta,word);
+         break;
+       }
+       counter++;
+       if(counter>2)
+       {
+        counter=0;
+        VecPosition++;
+       } 
+     }
+    }
+  }
+ 
+ 
+ puts("listando estrutura");
+// removemos um contador para não ler a primeira linha q seria faltas,salario...
+ VecPosition--;
+ puts("inserindo no banco");
+
+ while(VecPosition!=0)
+ {
+  fprintf(stdout,"-%s , %s, %s \n",lista[VecPosition].nome,lista[VecPosition].salario,lista[VecPosition].falta);
+  result = dbi_conn_queryf(conn, "INSERT INTO funcionarios (nome,salario,faltas) VALUES('%s','%s','%s');",
+   lista[VecPosition].nome,lista[VecPosition].salario,lista[VecPosition].falta); 
+
+  if(!result)
+  {
+   dbi_conn_error(conn, &errmsg);
+   DEBUG("erro no banco :: %s\n",errmsg);
+  }
+
+  dbi_result_free(result);
+  VecPosition--;
+ }
+
+// fechamos o XML e o DBI 
+ xmlTextReaderClose(reader);
+ dbi_conn_close(conn);
+ dbi_shutdown();
+ return 0;
+}
+
+// string replace
+char *StrRep(char *st,char *orig,char *repl,const int mim,int times)
+{
+ char bufer[mim];
+ char *ch,*out;
+// times to change
+ while(times!=0)
+ {
+  if(!(ch = strstr(st, orig)))
+   return st;
+  strncpy(bufer, st, ch-st);
+  bufer[ch-st] = 0;
+  sprintf(bufer+(ch-st),"%s%s",repl,ch+strlen(orig));
+  out=bufer;
+  times--;
+ }
+ return out;
+}
+[/sourcecode]
+
+<strong>vamos ver o código rodando,</strong>
+[sourcecode language="perl"]
+$ ./xml2db out/sirchaves2.xml
+--9+ = 4
+--salario = 7
+--faltas = 6
+--madruga = 7
+--800.00 = 6
+--14 = 2
+--chaves = 6
+--400.00 = 6
+--0 = 1
+--chikinha = 8
+--600.00 = 6
+--2 = 1
+--kiko = 4
+--353.40 = 6
+--0 = 1
+listando estrutura
+inserindo no banco
+-kiko , 353.40, 0 
+-chikinha , 600.00, 2 
+-chaves , 400.00, 0 
+-madruga , 800.00, 14 
+$ sqlite3 banco.db
+SQLite version 3.7.7 2011-06-23 19:49:22
+Enter ".help" for instructions
+Enter SQL statements terminated with a ";"
+sqlite> select * from funcionarios;
+kiko|353.40|0|1
+chikinha|600.0|2|2
+chaves|400.0|0|3
+madruga|800.0|14|4
+sqlite> 
+[/sourcecode]
+
+
+<strong>OK Yabadabadu!</strong> conseguimos :-)
+agora você pode prestigiar de gerênciar o banco,mudando porcentagem
+de salários soh com uma query etc...
+
+<strong>Referências:</strong>
+<a href="http://libdbi.sourceforge.net/" title="libdbi" target="_blank">libdbi, </a><a href="http://search.cpan.org/~isterin/XML-Excel-0.02/Excel.pm" title="xmlExcel perl" target="_blank">XML::Excel</a>,<a href="http://www.sqlite.org/" title="sqlite" target="_blank">sqlite</a> e <a href="http://xmlsoft.org/" title="libxml" target="_blank">libxml.</a>
+
+Depois dessa odisseia toda, falando com "<strong>kov</strong>" e o "<strong>Ephexis</strong>" do 
+<strong>irc.freenode.net</strong> canal <strong>##c-br</strong>, o kov me mandou
+esse link <strong>http://www.gaia-gis.it/FreeXL/</strong> logo depois vi esse
+excelente código <a href="http://www.gaia-gis.it/FreeXL/freexl-1.0.0a-doxy-doc/xl2sql_8c-example.html" title="xl2sql" target="_blank">AQUI</a> , tive que me conter para não pular pela janela ,ouw vida ordinária essa de
+Noob ,calma não me odeie... :-(  
+
+Ephexis me falou que o pessoal da janelinha liberou a especificação veja <a href="http://www.microsoft.com/interop/docs/OfficeBinaryFormats.mspx" title="xls" target="_blank">AQUI</a>
+
+
+
