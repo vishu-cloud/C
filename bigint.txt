@@ -1,0 +1,167 @@
+Aloha queridos leitores, firmes como <strong>geleia</strong> ?! , hoje vou 
+tentar explanar algo comum, pode ser útil para quem trabalha com  
+<strong>estatística,física,aritmética pesada em geral</strong> ou desafios 
+"<a href="http://pt.wikipedia.org/wiki/Leonhard_Euler" title="Euler quem é ?" target="_blank">Eulerianos</a>" aqueles problemas com sigma com valores 
+com fatoriais monstros,acumulativos e recursivos,onde seu
+computador pediria água de tanto serviço. 
+
+Quando você tem um <strong>número</strong> muito grande que ultrapassa a cota de uma 
+variável "<a href="http://en.wikipedia.org/wiki/Integer_%28computer_science%29#cnote_b_grp_notesc" title="o que é int" target="_blank">int</a>", variável muda a casaca para negativo,não tem para 
+onde mais correr, e agora ? uso "<strong>long</strong>" certo e se o long virar casaca 
+também , e se o "<strong>long long</strong>" não der e nem com "<strong>unsigned</strong>", Ho Ho parece 
+um <strong>dragão</strong> daqueles de múltiplas cabeças bem como <strong><a href="http://pt.wikipedia.org/wiki/Tiamat_%28personagem%29" title="D&amp;D" target="_blank">Tiamat</a></strong> do D&amp;D, 
+<img src="http://img651.imageshack.us/img651/9374/tiamatr.jpg" alt="tiamat" />:-D
+bom obviamente você chegou a epifania de usar "<strong>char *</strong>",usar alocação
+dinâmica e já veio uma utopia na cabeça,uma possível solução para
+nosso paradoxo, então você já sabe o que é um "<strong>BigInt</strong>". 
+
+[sourcecode language="c"]
+#include <stdio.h>
+
+int main()
+{
+//tente concatenar mais alguns algarismos em X e compile e analise os resultados
+ unsigned long long X=1844674407370955161;
+ fprintf(stdout,"%lld",X);
+ return 0;
+}
+[/sourcecode]
+
+Não vale o fardo seguir com a <strong>insanidade</strong> de como fazer do zero,
+ainda mais mundo moderno onde muitos problemas já foram solucionados,
+olhando em volta tocando uns livros e batendo uma busca no
+Google a 2 anos atrás, encontrei o <strong>GMP</strong> "<strong>GNU Multiple Precision 
+Arithmetic Library</strong>", uma API bem madura que proporciona o trabalho 
+com uma gamma de <strong>funções aritméticas</strong>, seja com variáveis integer,float 
+ou número racional, também conheci a lib para BigInt do <strong>OpenSSL</strong> mas 
+achei tão lenta que resolvi não escrever sobre. Quanto a otimização ?
+GMP tem várias <strong>otimizações em ASM</strong> de acordo com a arquitetura do seu
+computador, código fonte do GMP assusta até o <a href="http://www.chucknorris.com.br/" title="verdades sobre chuck norris" target="_blank">Chuck Norris</a>...
+
+Instalando:
+<strong># apt-get install libgmp-dev gmp-doc</strong>
+
+Lendo o manual:
+<strong>$ info gmp</strong>
+
+<strong>agora que temos material em mãos</strong>
+
+bom para usar a lib gmp usamos "gmp.h" e na hora de compilar usamos
+o argumento "<strong>-lgmp</strong>",vou explanar em algo empírico. 
+
+
+[sourcecode language="c"]
+// exemplo by Cooler_
+#include <stdio.h>
+#include <gmp.h>
+
+int main()
+{
+// var do gmp para trabalhar com signed int
+ mpz_t X;
+ unsigned int Y=512;
+// inciando
+ mpz_init(X);
+// mnemônico para atribuição x=y
+ mpz_set_ui(X,Y);
+// mnemônico para soma x+=y
+ mpz_add_ui(X,X,Y);
+// 1024^512 qual seria o resultado ?
+ mpz_pow_ui (X,X,Y);
+
+ gmp_fprintf(stdout,"%Zd  %s\n",X,"legal");
+/*
+gmp tem um próprio método de OUTPUT
+explicando o format string
+
+     F         mpf_t, float conversions
+     Q         mpq_t, integer conversions
+     M         mp_limb_t, integer conversions
+     N         mp_limb_t array, integer conversions
+     Z         mpz_t, integer conversion
+
+para INPUT use o gmp_scanf() e gmp_sscanf()
+*/
+
+
+/*
+expoente
+mpz_pow (mpz_t ROP, mpz_t BASE, mpz_t EXP)
+
+resto
+mpz_mod (mpz_t R, mpz_t N, mpz_t D)
+
+testa se é divisível
+int mpz_divisible_p (mpz_t N, mpz_t D)
+
+adição
+void mpz_add (mpz_t ROP, mpz_t OP1, mpz_t OP2)
+
+subtração
+void mpz_sub (mpz_t ROP, mpz_t OP1, mpz_t OP2)
+
+produto
+void mpz_mul (mpz_t ROP, mpz_t OP1, mpz_t OP2)
+
+divisão
+void mpz_div (mpz_t ROP, mpz_t OP1, mpz_t OP2)
+
+raiz quadrada
+void mpz_sqrt (mpz_t ROP, mpz_t OP)
+
+comparar dois números
+int mpz_cmp (mpz_t OP1, mpz_t OP2)
+...
+
+OBS: usamos "_ui" com nome da função quando precisamos usar "unsigned int"
+
+*/
+
+
+// limpando a bagunça
+ mpz_clear(X);
+
+ return 0;
+}
+[/sourcecode]
+
+Agora você pode ficar orgulhoso de conseguir fazer contas que uma calculadora
+de mão não conseguiria fazer, evidente que todo conhecimento abre portas...
+
+vamos a um desafio do project euler,algo bem easy 
+<strong>http://projecteuler.net/problem=48</strong>
+
+<strong>vendo enunciado:  </strong>                        
+sequência , 1^1 + 2^2 + 3^3 + ...  10^10 = 10405071317.
+quanto seria até 1000^1000 ops apenas os últimos 10 dígitos
+
+parece ser simples vamos fazer até 10 e pegar os últimos 5 dígitos
+
+[sourcecode language="c"]
+#include <stdio.h>
+#include <math.h>
+//coded by Cooler_
+int main()
+{
+ unsigned long long sum=0;
+// agora troque o count por 1000, e o digitos para 10
+ short count=10,digitos=5;
+
+ while(count)
+ {
+  sum+=pow(count,count);
+  count--;
+ }
+
+ fprintf(stdout,"%lld ,last %d digits is %d\n",sum,digitos,(int)fmod(sum,pow(10,digitos)) );
+ return 0;
+}
+[/sourcecode]
+compile e rode o programa e depois modifique  como no comentário,
+pensou em <strong>usar GMP</strong> ? e se você fazer de <strong>10000000</strong> ao invés de <strong>1000</strong> ?
+como você faria ?
+
+Meus <strong>agradecimentos</strong> ao <strong>utroz,enygmata e o kov</strong> do canal ##c-br da <strong>freenode</strong>
+;-)
+
+
