@@ -1,0 +1,324 @@
+Post não vai ser sobre o carrinho de <strong>controle remoto com infravermelho</strong>
+sim já terminei o protótipo dele já funciona, mas quero corroer a 
+placa fazer algo bem mais decente, invés de ficar usando breadboard.
+como eu sou bem <strong>NOOB</strong> em tudo e em eletrônica este post vai demorar.
+
+Olhe meu vídeo que você vai entender por que quero usar<strong> IR</strong> no carrinho
+[youtube http://www.youtube.com/watch?v=hK4EXjvWJ78&amp;w=720&amp;h=415]
+
+strikes back
+
+Já algum tempo que comprei <strong>sensor de movimento</strong> para fazer um sistema
+<strong>detector de "ladrão"</strong>, até pensei em usar um buzzer e tudo mais, 
+mas detector de ladrão com buzzer é muito manjado. Como eu gosto de trazer o que é
+meio incomum para o blog então tive uma ideia...
+
+Missão <strong>comunicação serial</strong> para quando for detectar o 
+movimento tirar uma foto da webcam e mandar e-mail com anexo a foto. 
+já tem soluções com o "motion" ou mesmo com opencv detectando movimentos 
+da webcam reconhecimento e tudo mais, mas a ideia do feito foi treinar
+desenvolvimento com "<strong>arduino pro mini</strong>" em conjunto com "<strong>FTDI</strong>"...
+
+<strong>material usado:</strong>
+<strong>Arduino pro mini</strong>  - $18.95 USD sparkfun (anda meio salgado o preço prefiro o <a href="http://www.jameco.com/webapp/wcs/stores/servlet/Product_10001_10001_2136526_-1" title="diavolino">diavolino</a> )
+<strong>Resistor 10k Ohm</strong>  - $0.15 santa efigenia
+<strong>Pir motion sensor</strong> - $9.95 USD sparkfun
+<strong>Machine Pin headers</strong> - $2.00 santa efigenia (muito chato soldar isso no arduino)
+<strong>FTDI Basic Breakout</strong> 5V - $12.00 USD sparkfun   
+
+<strong>vendo como fica</strong>
+<img src="http://img38.imageshack.us/img38/808/img0151of.jpg" alt="pronto1" />
+
+seguindo a dica de
+<strong>http://bildr.org/2011/06/pir_arduino/</strong>
+
+<strong>código do arduino</strong>
+
+[sourcecode language="c"]
+int pirPin = 9; 
+
+void setup(){
+ Serial.begin(9600);
+ pinMode(pirPin, INPUT);
+}
+
+void loop(){
+  int pirVal = digitalRead(pirPin);
+
+
+// achou movimento
+  if(pirVal == LOW)
+  { 
+//pausa em milesegundos equivalente ao usleep do ansi C
+     delay(500);
+    Serial.println("1");
+  }
+  //sem movimento
+  else
+  {
+    Serial.println("0");
+  }
+
+}
+[/sourcecode]
+
+<strong>Lembra da nossa Missão ?</strong>
+Se o arduino detectar valor com sensor de movimento
+ira mandar um OUTPUT para a <strong>porta serial</strong>,nosso programa em C
+irá ficar na esculta se ele julgar movimento do conjunto de 
+OUTPUT ele ira tirar uma <strong>SHOOT da WEBCAM</strong> e ira <strong>mandar e-mail
+com anexo</strong> a foto... 
+
+Vamos <strong>resolver o problema do E-mail</strong>,bom fazer um cliente de e-mail do zero
+em C é trabalhoso e leva tempo, então vamos <strong>instalar cliente de e-mail</strong>
+instalamos o "<strong>mutt</strong>"
+<code>
+//use o gerenciador do seu OS,se for BSD use ports...
+$ sudo apt-get install mutt 
+$ vi ~/.muttrc
+ 
+set realname="seunome"
+set from="exemplo@gmail.com;"
+set my_user=exemplo@gmail.com
+set my_pass='sua senha'
+set smtp_url=smtps://$my_user:$my_pass@smtp.gmail.com
+set ssl_force_tls = yes 
+:wq!
+</code>
+
+
+vamos testar
+<code>
+echo 'conteúdo do e-mail' | mutt -s 'assunto do e-mail' exemplo@gmail.com
+</code>
+e vá ver sua caixa de corrêio verificar...
+
+como enviar nosso anexo ?
+<code>
+echo 'LogLog!!!' | mutt -s 'THief Get LOg' -a c/arduino/test.jpg -- exemplo@gmail.com
+</code>
+quer aprender mais sobre o mutt ? "<strong>man mutt</strong>"
+
+<strong>agora podemos partir para o código</strong>
+não fique triste por eu ter usado o <a href="http://opencv.willowgarage.com/" title="opencv" target="_blank">OpenCV</a> para tirar foto da webcam
+
+[sourcecode language="c"]
+/*
+contato: c00f3r@gmail.com
+autor: Antonio Costa aka Cooler_
+coolerlab.wordpress.com
+
+Simples detector de ladrão usando Arduino+sensor de movimento
+
+apt-get install libhighgui-dev  libcv
+gcc -o thiefget thiefget.c  -lcv -lhighgui -lcxcore; ./thiefget
+
+usei o OpenCV para tirar shoot da webcam pois não conheço outra API
+que faça o mesmo...
+
+só para enviar e-mail que usei programa de terceiro... parece gambi até xD
+
+executando:
+como argumento o seu dispositivo onde esta o arduino
+./thiefget /dev/ttyUSB0
+
+
+ */
+#include <stdio.h>    
+#include <stdlib.h> 
+#include <string.h>   
+#include <unistd.h>   
+#include <termios.h>  
+#include <fcntl.h> 
+#include "opencv/cv.h"
+#include "opencv/highgui.h"
+
+// quantas vezes o sensor retornara 1 para mandar e-mail ?
+#define MOVES 16
+
+// numero que tolera erros
+#define FAIL 16
+
+// sempre concatene com 'B' a  taxa de transmissão ,"9600" padrão do AVR
+#define BAUDRATE B9600
+
+int serialboot(const char* serialport, int baud);
+int serialread(int fd, char* buf, char until);
+void webcam(const char* file);
+
+void banner() 
+{
+ printf("\nFollow patern: ./PegaLadrao <SerialPort>\n"
+  "Just Another geek Cool THing With ArduinO!!!\n"
+  "Simple THief Get\n"
+  "Coded By Cooler_\n"
+  "coolerlab.wordpress.com\n"
+  "\n");
+}
+
+int main(int argc, char *argv[]) 
+{
+ int baudrate = BAUDRATE,fd=0,counter=0,OFF=0; 
+ char *buf=malloc(sizeof(char)*16);
+ char *serialport=malloc(sizeof(char)*512);
+
+  if(argc<2) 
+  {
+   banner();
+   exit(EXIT_SUCCESS);
+  }
+    
+  printf("Serial:%s\n",argv[1]);
+
+//conection
+  strncpy(serialport,argv[1],512);
+  fd=serialboot(serialport, baudrate);
+
+   if(fd<=0)
+   {
+    puts("veja se o dispositivo esta conectado!!");
+    printf("%d\n",fd);
+    exit(EXIT_SUCCESS);
+   }
+ 
+  while(1) 
+  {
+    
+// tempo em milesegundos, altere como for necessário
+   serialread(fd, buf, '\n');
+   printf("====================\nread: %s\ncounter: %d\n===================\n",buf,counter);
+
+// se ler "1" contador é atribuido
+     if(strcmp(buf,"1")>0)
+     {
+      usleep(500000);
+      puts("MOVEMENT ONLINE");
+      puts(buf);
+      counter++;
+      OFF=0;
+     } 
+//numero de vezes que achou movimento
+     if(counter==MOVES)
+     {
+      puts("cof cof thief in HOME");
+      webcam("test.jpg");
+      system("echo 'LogLog!!!' | mutt -s 'THief Get LOg' -a /home/nick/c/arduino/test.jpg -- exemplo@gmail.com");
+      break;
+      counter=0;
+     } 
+     if(!strlen(buf))
+      OFF--;
+     if(OFF==FAIL)
+      break;
+     
+  }
+
+ puts("Simple THief Get ,set to OFF");
+ close(fd);
+ free(buf);
+ free(serialport);
+
+ exit(EXIT_SUCCESS);    
+} 
+
+int serialread(int fd, char* buf, char until)
+{
+ char b[1];
+ int i=0;
+ do { 
+  int n=read(fd, b, 1);  
+  if(n==-1) 
+    return -1;    
+  if(!n) 
+  {
+   usleep(16000); 
+   continue;
+  }
+  buf[i] = b[0]; 
+  i++;
+ } while(b[0]!=until);
+
+ buf[i]=0;  
+
+ return 0;
+}
+
+int serialboot(const char* serialport, int baud)
+{
+ struct termios toptions;
+ int fd;
+
+    fd = open(serialport, O_RDWR | O_NOCTTY | O_NDELAY);
+
+    if(fd == -1)  
+    {
+     puts("serialboot: não foi possivel abrir a porta ");
+     return -1;
+    }
+    
+    if(tcgetattr(fd, &toptions) < 0) 
+    {
+     puts("serialboot: nao foi possivel pegar atributos do terminal");
+     return -1;
+    }
+    speed_t brate = baud; 
+    cfsetispeed(&toptions, brate);
+    cfsetospeed(&toptions, brate);
+   // para default recv com termios.h
+    // 8N1
+    toptions.c_cflag &= ~PARENB;
+    toptions.c_cflag &= ~CSTOPB;
+    toptions.c_cflag &= ~CSIZE;
+    toptions.c_cflag |= CS8;
+    // no flow control
+    toptions.c_cflag &= ~CRTSCTS;
+    toptions.c_cflag |= CREAD | CLOCAL;  // turn on READ & ignore ctrl lines
+    toptions.c_iflag &= ~(IXON | IXOFF | IXANY); // turn off s/w flow ctrl
+    toptions.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); // make raw
+    toptions.c_oflag &= ~OPOST; // make raw
+
+    // olhe http://unixwiz.net/techtips/termios-vmin-vtime.html
+    toptions.c_cc[VMIN]  = 0;
+    toptions.c_cc[VTIME] = 20;
+    
+    if(tcsetattr(fd, TCSANOW, &toptions) < 0) 
+    {
+     puts("serialboot: nao foi possivel adicionar atributos no term erro 1");
+     return -1;
+    }
+
+ return fd;
+}
+
+/*tira foto usando opencv
+  não queria usar opencv, mas unica API que ja tinha
+ usado com a webcam...
+*/
+void webcam(const char* file)
+{
+ CvCapture *capture = cvCreateCameraCapture(0);
+   if(capture==NULL)
+    puts( "nao he possivel pegar foto!\n");
+
+  IplImage* frame = cvQueryFrame( capture );
+   if(!frame)
+    puts( "erro na foto!\n");
+
+  int imageParams[3] = {CV_IMWRITE_JPEG_QUALITY, 100, 0};
+  cvSaveImage(file , frame,imageParams);
+  cvReleaseCapture( &capture );
+}
+[/sourcecode]
+
+veja o e-mail que chegou quando cheguei proximo do sensor
+<img src="http://img689.imageshack.us/img689/6863/capturadetela0312201123.png" alt="e-mailcooler" />
+
+<strong>muito divertido...</strong>
+
+bom é isso ai, 
+escrevi o código meio que na <strong>correria</strong> mas acho 
+que deu para explanar a ideia... 
+fique avontade para melhorar o código ;-)
+
+
+
