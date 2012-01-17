@@ -1,0 +1,185 @@
+Lendo post do meu amigo <strong>sigsegv</strong> sobre <a href="http://felipe.ath.cx/sobreescrevendo-chamadas-de-funcao-com-ld-preload" title="ldpreload" target="_blank">"ld preload"</a>
+fiquei motivado escrever algo sobre <strong>bibliotecas em C</strong> , 
+algo bem informal bem como ajudar iniciantes.assim como fiz
+no post de <a href="http://coolerlab.wordpress.com/2011/10/27/pkg-config-informacoes-sobre-as-bibliotecas/" title="pkgconfig" target="_blank">pkg-config.</a>
+<img src="http://desmond.imageshack.us/Himg855/scaled.php?server=855&amp;filename=necronomiconevildead.jpg&amp;res=medium" alt="necronomicon" />
+
+
+<strong>Criando uma biblioteca estática (Static library) </strong>
+---------------------------------------------------------------------
+Quando a ligação é feita durante a criação de um executável ou 
+outro arquivo objeto, ele é conhecido como vinculação estática 
+ou early binding. Neste caso, a ligação é feita geralmente por 
+um linker, mas também pode ser feito pelo compilador. A biblioteca
+estática, também conhecida como um archive, é que se destina a ser 
+ligada estaticamente. 
+
+vamos la
+
+<strong>$ vim test.c</strong>
+
+[sourcecode language="c"]
+int sum(int a,int b)
+{
+ return a+b;
+}
+[/sourcecode]
+<strong>:wq!</strong>
+para criar o arquivo com extensão ".o"
+<strong>$ gcc -Wall -c test.c</strong>
+
+passamos para ".a"
+<strong>$ ar -cvq test.a test.o</strong>
+
+pronto agora você pode usar sua bibliotéca estática 
+<strong>$ gcc -o a a.c test.a</strong>
+
+também pode-se fazer
+<strong>$ gcc -o a a.c -ltest</strong>
+<strong>
+$ vim a.c</strong>
+[sourcecode language="c"]
+ #include 
+
+ int main()
+ {
+  printf("%d \n",sum(2,2));
+ }
+[/sourcecode]
+<strong>:wq!</strong>
+
+ao executar "a" devera resultar em "4" no stdout
+
+
+<strong>
+Criando uma biblioteca dinâmica (Dynamic Library)</strong>
+----------------------------------------------------------
+
+  Carregamento dinâmico é um mecanismo pelo qual um programa de computador pode, em 
+tempo de execução, carregar uma biblioteca (ou binário outros) para a memória, 
+recuperar os endereços de funções e variáveis contidas na biblioteca, executar 
+essas funções ou acessar essas variáveis, e descarregar o biblioteca da memória. 
+
+Ao contrário de vinculação estática e tempo de carregamento ligando, este mecanismo 
+permite que um programa de computador para a inicialização, na ausência destas 
+bibliotecas, para descobrir as bibliotecas disponíveis e potencialmente ganhar 
+funcionalidades adicionais.
+
+ No windows este tipo de biblioteca se chama <strong>DLL</strong> (<strong>dynamic-link library</strong>) em Unix Like
+e afins chama-se <strong>DSO</strong>"<strong>dynamic shared object</strong>"
+
+"<strong>man ld.so</strong>" para mais informações 
+
+vamos la
+<strong>
+$ gcc -Wall -fPIC -c test.c
+$ gcc -shared -Wl,-soname,test.so.1 -o test.so.1.0 test.o
+$ mv test.so.1.0 /lib
+$ ln -sf /lib/test.so.1.0 /lib/test.so
+$ ln -sf /lib/test.so.1.0 /lib/test.so.1</strong>
+
+Entendendo os argv(argumentos) 
+
+"<strong>-fPIC</strong>" seria uma diretiva para compilar de forma independente 
+Ideia é adicionar um nível adicional de indireção a todos os 
+dados globais e referências de função no código. utilizando algumas 
+partes da ligação e carregamento de processos, é possível fazer a 
+seção de texto da biblioteca compartilhada e independente 
+de posição, no sentido de que ele possa ser facilmente mapeado em diferentes 
+endereços da memória sem a necessidade de mudar um pouco. 
+"<strong>-shared</strong>" Produzir um objeto compartilhado que pode ser relacionado com 
+outros objetos para formar um executável.
+<a href="http://eli.thegreenplace.net/2011/11/03/position-independent-code-pic-in-shared-libraries/" title="explicação PIC" target="_blank"> aqui explica melhor </a>
+
+um "<strong>man gcc</strong>" não faz mal para saúde ;-)
+
+na hora de compilar
+
+<strong>$ gcc -Wall -I/path/to/include-files -L/path/to/libraries a.c -ltest -o a</strong>
+
+ou também
+<strong>$ gcc -Wall -L/lib a.c -ltest -o a</strong>
+
+
+<strong>Por fim</strong>
+------------
+bom aqui foi uma introdução bem superficial, sugiro estudar 
+autotools e cmake,bem como automatizar suas tarefas , não
+conheço ninguém que goste deles, são muitas paradigmas a 
+seguir, muitos fins de semana a perder fazendo testes com 
+autoconf automake... Entretanto é um estudo que me parece 
+indispensável para quem quer ser um programador em C completo.
+
+Para estudo do cmake(é bem mais fácil de usar) esse link
+<a href="http://www.cmake.org/cmake/help/documentation.html" title="cmake" target="_blank"><img src="http://www.cmake.org/opensourcelogos/cmake100.png" alt="cmake" /></a>
+
+Caso queira estudar autotools(estou lendo este livro ;-) )
+<a href="http://nostarch.com/autotools.htm" title="livro autotools" target="_blank"><img src="http://nostarch.com/sites/default/files/imagecache/product_main_page/autotools_big.png" alt="autotools" /></a>
+
+bom se este post não fui o suficiente para você sugiro que leia
+o paper do meu amigo sigsegv sobre ELF para entender linkagem
+das bibliotecas e algo mais... <a href="http://cogubin.leet.la/edicoes/1/DissecandoELF.txt" title="cogumelo binario dissecando ELF">AQUI</a>
+
+ Bom dia Boa noite galera,tempinho ai que não mando algo paro blog,
+ mais aqui está um assunto interessante que muitos iniciantes ficam
+ perdidos em linguagem C, nada muito difícil algo bem sútil para 
+ aprendizado.
+
+ Para instalar uma "<strong>API</strong>" para desenvolvimento em sistemas unix
+ á várias formas em <strong>Ruby </strong>por exemplo se usa gems,em <strong>Perl</strong> temos
+ o CPAN, <strong>Common Lisp</strong> temos asdf. <strong>E em C</strong> ? isso varia de distro
+ para distro pode-se usar apt-get,yum,pacman e os *BSD  o ports
+ de acordo com o Sistema Operacional, entretanto todos tem o nome 
+ do pacote semelhante na maioria das vezes podendo ter alguma 
+ otimização ou versão mais atual dependendo se é current ,stable
+ em fim, por exemplo de pkg(pacote) vamos sitar uma API bem popular
+ a biblioteca do Curl ou seja <strong>libCurl</strong>, para poder usar temos que 
+ instalar, podemos baixar o tarball extrair dar config,make,make install
+ ou podemos buscar nos repositórios exemplo se procurarmos "<strong>libcurl</strong>" 
+ não vamos encontrar um nome exato , você vai ver muitos tipos de 
+ pacotes exemplo "libcurl-dev" que o "<strong>dev</strong>" significa development é 
+ um pkg para desenvolvedor.
+
+ Outro argumento no  final do pacote  é  o "<strong>doc</strong>" que  significa 
+ que é para documentação você vai poder usar o "<strong>man libcurl</strong>" por 
+ exemplo,"<strong>dbg</strong>" pkg vem compilado com símbolos para depuração.
+
+ Algo bem interessante quando falamos de desenvolvimento em C
+ é saber onde está as APIs do sistema e detalhes claro que você 
+ pode simplesmente abrir "<strong>/usr/include</strong>" e ver as headers a olho 
+ nu ,  mais uma  forma   mais  nobre  de  se  informar é usar o 
+ "<strong>pkg-config</strong>", exemplo
+
+[sourcecode language="c"]
+ $ pkg-config --list-all
+[/sourcecode]
+ uma lista das API instaladas irá surgir logo a frente informação
+ sobre as funções da mesma.
+
+ se quisermos saber se a <strong>libcurl</strong> foi instalada
+[sourcecode language="c"]
+ $ pkg-config --list-all | grep curl 
+[/sourcecode]
+ ver versão da header
+[sourcecode language="c"]
+ $ pkg-config --print-provides libcurl 
+[/sourcecode]
+ ver o último log da <strong>libcurl</strong> para depuração,algumas pkg pedem "*-<strong>dbg</strong>"
+ no caso da libcurl não pede...
+[sourcecode language="c"]
+ $ pkg-config --debug libcurl | tail
+[/sourcecode]
+ exemplo referenciando as libs do <strong>GTK</strong> caso queira fazer uma aplicação
+ usando gtk,para não ter que escrever lib por lib com argumento "-l"
+[sourcecode language="c"]
+ $ gcc -o code code.c `pkg-config --cflags --libs gtk+-2.0` 
+[/sourcecode]
+ apenas mostrando a referencias das bibliotecas
+[sourcecode language="c"]
+ $ pkg-config --cflags gtk+-2.0
+[/sourcecode]
+ mais informações "<strong>man pkg-config</strong>"
+
+
+
+
