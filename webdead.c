@@ -21,7 +21,7 @@
 #define MAX  26512
 
 // maximo de threads para conexões multiplas 
-#define THREAD 20
+#define THREAD 10
 
 // macros para depuração , 0 para desativar
 #define BUGVIEW 1
@@ -43,11 +43,9 @@ pthread_mutex_t morfo = PTHREAD_MUTEX_INITIALIZER;
 void *xmalloc(unsigned int len);
 int init_sock(int serversock,int port);
 void *request(void * sock);
-char **split(char *string, char separator); 
-int WriteFile(char *file,char *str);
+char *substr(char *src, const int start, const int count);
+char **split(char *src, const char *token, int *total);
 char *readLine(char * NameFile);
-char *TimeNow();
-char *StrFlip(char *str);
 char *StrRep(char *st,char *orig,char *repl,const int mim); 
 
 // inicio do código
@@ -60,6 +58,13 @@ int main (int argc, char *argv[])
   DEBUG("Precisa usar um argumento para porta");
 
  port=atoi(argv[1]);
+ 
+ if(!(port<=65535&& port>0))
+ {
+  DEBUG("error in PORT\n");
+  return 0;
+ }
+ 
  serversock=init_sock(serversock,port);
 
  pack[0]=(int *)port;
@@ -73,7 +78,7 @@ int main (int argc, char *argv[])
   if(count!=THREAD)
   {
 //accept e passa o fd q ele retornou como argumento, no create
-   if(pthread_create (&thread[count], NULL, request, (void *)pack) != 0)
+   if(pthread_create(&thread[count], NULL, request, (void *)pack) != 0)
     DEBUG("problema no pthread_create"); 
    count++;
   } else {
@@ -138,13 +143,11 @@ void *request(void * sock)
 {
  int **unpack = (int **)sock;
  int serversock=(int)unpack[1],port=(int)unpack[0],count=0;
- int clientsock,socklen;   
+ int clientsock,socklen,total;   
  struct sockaddr_in clientaddr;
  char *resposta=(char *)alloca(MAX*sizeof(char));
  char *pergunta=(char *)xmalloc(BUF*sizeof(char));
- char **parse=(char **)xmalloc(16*sizeof(char *));
- char **URL=(char **)xmalloc(8*sizeof(char *));
- char **POST=(char **)xmalloc(4*sizeof(char *));
+ char **parse,**URL,**POST;
 
   memset(&clientaddr, 0, sizeof(clientaddr));
   clientaddr.sin_family=AF_INET;
@@ -165,12 +168,15 @@ void *request(void * sock)
 // pega useragent ,POST e GET etc...
  if(recv(clientsock,pergunta,BUF,0)!=-1)
  {
+//  puts(pergunta);
 // split da head , para pegar URL outras coisas
-  parse=split(pergunta,'\r'); //16);
+  total=12;
+  parse=split(pergunta,"\r",&total); //16);
 //split para extrai endereço de html da URL em URL[1]
-  URL=split(parse[0],' ');
+  total=4;
+  URL=split(parse[0]," ",&total);
 
-  while(count != 10)
+  while(parse[count] != NULL)
   {
    fprintf(stdout,"%s",parse[count]); 
    count++;
@@ -179,88 +185,137 @@ void *request(void * sock)
 // se encontrar algum POST, mostra e dá parser
   if(strstr(parse[0],"POST"))
   {
-   fprintf(stdout,"\nLog of POST: %s \n",parse[12]);
-   POST=split(parse[12],'&');
-   fprintf(stdout,"\n %s  :  %s \n",POST[0],POST[1]);
-   
+   total=6;
+   fprintf(stdout,"\nLog of POST: \n");
+   POST=split(parse[count-1],"&",&total);
+    if(POST!=NULL)
+    {
+     fprintf(stdout,"\n %s  \n",POST[0]);
+     while(total)
+     {
+      free(POST[total]);
+      total--;
+     }
+    }
   }
 
-  strcat(resposta,"HTTP/1.1 200 Ok\n\n");
+  strncat(resposta,"HTTP/1.1 200 Ok\n\n",26);
   URL[1]=StrRep(URL[1],"/","",sizeof(URL[1]));  
-  strcat(resposta,readLine(URL[1]));
-     
+  strncat(resposta,readLine(URL[1]),BUF);
+
+// libera heap
+  count=4;
+  while(count)
+  {
+   free(URL[count]);
+   count--;
+  }
+  count=12;
+  while(count)
+  {
+   free(parse[count]);
+   count--;
+  }
+
 // OUT para o cliente
   write(clientsock, resposta, strlen (resposta));
+
+//libera heap
+ free(URL);
+ free(parse);
 
 // unlock 
  pthread_mutex_unlock(&morfo);  
 
  }
+ free(pergunta);
 
 // fecha conexão 
  close(clientsock);
 
- free(POST);
- free(pergunta);
- free(URL);
- free(parse);
-
  pthread_exit(NULL);
 }
 
-
-// split igual do Perl e do PHP  x-)
-char **split(char *string, char separator) 
+//
+char *substr(char *src, const int start, const int count)
 {
- int inicio=0,count=2,i=0,x=0;
- char **newarray;
-
- while(string[i] != '\0')
+ char *tmp;
+ tmp = (char *)xmalloc(count+1);
+ if(tmp == NULL) 
  {
-// numero de elementos que tera nosso array 
-  if(string[i] == separator)
+  DEBUG("error");
+  return NULL;
+ }
+
+ strncpy(tmp, src+start, count);
+ tmp[count] = '\0';
+
+ return tmp;
+}
+
+// split 
+char **split(char *src, const char *token, int *total)
+{ 
+ char **str;
+ register int i, j, count, item, start;
+ int len;
+
+ if(!src || !token) 
+ {
+  *total = 0;
+  return NULL;
+ }
+
+ count = item = start = 0;
+ j = 1;
+ len = strlen(src);
+
+ for(i = 0; i < len; i++) 
+ {
+  if(src[i] == *token)
    count++;
-  i++;              
  }
 
- newarray=calloc(count,sizeof(char*));
- i=0;
-
- while(*string!='\0') 
+ if(!count) 
  {
-  if(*string==separator) 
-  {
-   newarray[i]=calloc(x-inicio+2,sizeof(char));
-   strncpy(newarray[i],string-x+inicio,x-inicio);
-   newarray[i][x-inicio+1]='\0'; 
-   inicio=x;
-   inicio++;
-   i++;
-  }
-  string++;
-  x++;
+  *total = 0;
+  return NULL;
  }
+
+ str = (char **)xmalloc(count * sizeof(char *));
+ if(str == NULL)
+  DEBUG("error");
+
+ for(i = 0; i < len; i++) 
+ {
+  if(src[i] != *token)
+   j++;
+  else {
+   str[item] = (char *)xmalloc(j-start);
+    if (str[item] == NULL) 
+    {
+     DEBUG("error");
+     return NULL;
+    }
+   *(str+item) = substr(src, start, j-1);
+   str[item][j-start-1] = '\0';
+   item++;
+   start = j++;
+  }
+ }
+
+
+ *(str+count) = (char *)xmalloc(j);
+ if(str[count] == NULL)
+  DEBUG("error");
+
+ str[count] = substr(src, start, j);
+ str[count][j-start] = '\0';
+ *total = ++count;
+
+ return str;
+}
         
- newarray[i] = calloc(x - inicio + 1,sizeof(char));
- strncpy(newarray[i],string-x+inicio,x-inicio);
- newarray[++i] = NULL;
- 
- return newarray;
-}
-
-// escreve em um arquivo
-int WriteFile(char *file,char *str)
-{
- FILE *arq;
- 
- arq=fopen(file,"a"); 
- if(!arq) 
-  DEBUG("error in WriteFile() %s",file);    
- fprintf(arq,"%s\n",str); 
- fclose(arq); 
-
- return 1;
-}
 
 // return lines from file, example:  const char *buff=readLine("log.txt"),printf("%s",buff);
 char *readLine(char * NameFile)
@@ -272,45 +327,17 @@ char *readLine(char * NameFile)
 
  if( !file || !lineBuffer )
   return "error in your URL";
-
-//  DEBUG("error in readLine() at %s",NameFile);
  
  while(fgets(line,sizeof line,file))  
  {
   lineBuffer=realloc(lineBuffer,strlen(lineBuffer)+strlen(line)+1);
   if(!lineBuffer)
    DEBUG("error in readLine() at %s",NameFile);
-  strcat(lineBuffer,line);
+  strncat(lineBuffer,line,MAX);
  }
 
  fclose(file);
  return lineBuffer;
-}
-
-char *TimeNow()
-{
- struct tm *local;
- time_t t;
- t = time(NULL);
- local = localtime(&t);
- local = gmtime(&t);
- return asctime(local);
-}
-
-// return reverse string
-char *StrFlip(char *str)
-{
- char *p1, *p2;
-
- if(! str || ! *str)
-  return str;
- for(p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
- {
-  *p1 ^= *p2;
-  *p2 ^= *p1;
-  *p1 ^= *p2;
- }
- return str;
 }
 
 
