@@ -239,9 +239,9 @@ void *request(void * sock)
 //
 char *substr(char *src, const int start, const int count)
 {
- char *tmp;
+ char *tmp,*tmp2;
  tmp = (char *)xmalloc(count+1);
- if(tmp == NULL) 
+ if (tmp == NULL) 
  {
   DEBUG("error");
   return NULL;
@@ -249,8 +249,10 @@ char *substr(char *src, const int start, const int count)
 
  strncpy(tmp, src+start, count);
  tmp[count] = '\0';
+ strncpy(tmp2,tmp,count);
+ free(tmp);
 
- return tmp;
+ return tmp2;
 }
 
 // split 
