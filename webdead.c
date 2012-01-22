@@ -58,13 +58,11 @@ int main (int argc, char *argv[])
   DEBUG("Precisa usar um argumento para porta");
 
  port=atoi(argv[1]);
- 
  if(!(port<=65535&& port>0))
  {
   DEBUG("error in PORT\n");
   return 0;
  }
- 
  serversock=init_sock(serversock,port);
 
  pack[0]=(int *)port;
@@ -203,7 +201,6 @@ void *request(void * sock)
   URL[1]=StrRep(URL[1],"/","",sizeof(URL[1]));  
   strncat(resposta,readLine(URL[1]),BUF);
 
-// libera heap
   count=4;
   while(count)
   {
@@ -220,7 +217,6 @@ void *request(void * sock)
 // OUT para o cliente
   write(clientsock, resposta, strlen (resposta));
 
-//libera heap
  free(URL);
  free(parse);
 
@@ -236,7 +232,6 @@ void *request(void * sock)
  pthread_exit(NULL);
 }
 
-//
 char *substr(char *src, const int start, const int count)
 {
  char *tmp,*tmp2;
@@ -252,7 +247,7 @@ char *substr(char *src, const int start, const int count)
  strncpy(tmp2,tmp,count);
  free(tmp);
 
- return tmp2;
+ return tmp;
 }
 
 // split 
@@ -306,7 +301,6 @@ char **split(char *src, const char *token, int *total)
   }
  }
 
-
  *(str+count) = (char *)xmalloc(j);
  if(str[count] == NULL)
   DEBUG("error");
@@ -314,6 +308,8 @@ char **split(char *src, const char *token, int *total)
  str[count] = substr(src, start, j);
  str[count][j-start] = '\0';
  *total = ++count;
+
+ free(str);
 
  return str;
 }
@@ -339,6 +335,7 @@ char *readLine(char * NameFile)
  }
 
  fclose(file);
+ free(lineBuffer);
  return lineBuffer;
 }
 
