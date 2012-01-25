@@ -1,6 +1,6 @@
 /*
 last check up 
-11/01/2012
+25/01/2012
 ------------
 
        _____________
@@ -8,14 +8,13 @@ last check up
       (____________ )
        |           |
        |           |  
-       |           |
-      /             \
-     /               \  
+      _|           |_
+     /               \
    /                  \
   (___________________) 
   |                   |
   |   ...:::Beer:::   |
-  |..::Version:0.04::.|
+  |..::Version:0.05::.|
   |                   |
   |___________________|
   |                   |
@@ -30,23 +29,51 @@ is held by Apache license 2.0
 -----------------------
 Beer simple C header
 
-Authors: Cooler_,m0nad,ryonagana,b4r0n
+Authors: Cooler_,m0nad,ryonagana,b4r0n,utroz
 E-mail: c00f3r[at]gmail[dot]com
 date: 03/08/2011
 
 thanks: 
   _mlk_,m0nad,
-  I4K,sigsegv,b-man
+  I4K,sigsegv,b-man,kov,utroz,eremitah,vorazbr,
   delfo,c0lt7r,B4r0n,joey,fokerbug,
   zepplin,voidpointer,muzgo,memset,b4r0n,novato_br...
+  
+  Beer is a C header to help you in small problems
+
+Have a lot functions how
+math functions(mmc,mdc,bitwise_sqrt,quadratic equation,factorial,test if number is prime..)
+parsers,
+string functions (split,strrev..),
+validate e-mail,
+SQL query filter,
+Files Jobs how READ,WRITE,COPY,list DIRs,bytes of file...
+
+strings,numbers convert
+
+    |-hex2int
+    |-dec2bin
+    |-char2hex
+    |-hex2char
+    |-string2hex
+
+bitwise macros ,another things
+do you want help us ?
+send your function...
+
+in the future this header will a dynamic library...
 
 */
 
 #include <stdio.h>
-#include <alloca.h>
 #include <stdlib.h>
 #include <string.h>
+
+//time functions...
 #include <time.h>
+// use to dir functions
+#include <dirent.h>
+
 
 //macro to read stdin string
 #define ReadString(a) fgets(a,sizeof(a),stdin),a[strlen(a)-1] = '\0'; 
@@ -71,12 +98,6 @@ thanks:
 #define CLR_MFLAG(N, F)       ( (N) &= ~(F) )
 #define GET_MFLAG(N, F)       ( (N) & (F) )
 
-// Prints File Name/ Current Line , by utroz
-#define DESCRIPTION "File Name:(%s) | Current Line:(%d)\n"
-#define FILE_INFO PUT_BEER(DESCRIPTION, __FILE__, __LINE__)
-#define PRINT_(...) fprintf(stderr, __VA_ARGS__)
-#define PUT_BEER(buffer, ...) PRINT_ (buffer, __VA_ARGS__)
-
 #define BUGVIEW 1
 
 #define DEBUG(x, s...) do { \
@@ -88,6 +109,16 @@ thanks:
  __LINE__, __FUNCTION__); \
  fprintf(stderr, x, ## s); \
 } while (0);
+
+// HEAP alignment :-X
+void *xmalloc(unsigned int len)
+{
+ void *ptr;
+ ptr=malloc(len);
+ if(ptr==NULL) 
+  DEBUG("fail malloc");
+ return ptr;
+}
 
 // convert decimal to binary
 char * dec2bin(int n, char * string)
@@ -172,82 +203,6 @@ unsigned long hex2int(char *a, unsigned int len)
   i++;
  }
  return val;
-}
-
-
-/* Utroz Functions to Beer.h open source project.
- * Custom Functions 
- * GET_BEER: Function avoids buffer overflow.
- * PUT_BEER: Custom print.
- * FILE_INFO: Shows info about a file(name, current line)
- */  
-
-/* :: RESULT ::
- * GET_BEER(buffer_, 15): Testing function against buffer overflow! It's right.
- * PUT_BEER("%d %s\n", 1, buffer_): 1 Testing functiou
- * FILE_INFO: File Name:(test.c) | Current Line:(35)
- */
-
-unsigned int
-GET_BEER(char *buffer, size_t size)				
-{
-    signed char c;					
-    unsigned register i;	
-	
-    for(i = 0; i < size && (c = getchar()) != EOF 
-	&& c != '\n'; i++)	 			
-	buffer[i] = c;	
-    
-    if(c == '\n') buffer[i] = c;			
-    buffer[i+1] = '\0';	
-
-    /* Return amount of characters read
-     * Case occur a buffer overflow 
-     * the function will return -1 */ 
-    return (i > size)? -1 : i; 
-}
-		
-
-/* 
-this function made by utroz
-mailto:utroz@oakcoders.com
- 
- binary_str and  binary_view
-How to use (Example): binary_str("String Test");
- CHAR           BINARY          ASCII
-(char)-> S |(bin)-> 01010011 |(dec)-> 83
-(char)-> t |(bin)-> 01110100 |(dec)-> 116
-(char)-> r |(bin)-> 01110010 |(dec)-> 114
-(char)-> i |(bin)-> 01101001 |(dec)-> 105
-(char)-> n |(bin)-> 01101110 |(dec)-> 110
-(char)-> g |(bin)-> 01100111 |(dec)-> 103
-(char)->   |(bin)-> 00100000 |(dec)-> 32
-(char)-> T |(bin)-> 01010100 |(dec)-> 84
-(char)-> e |(bin)-> 01100101 |(dec)-> 101
-(char)-> s |(bin)-> 01110011 |(dec)-> 115
-(char)-> t |(bin)-> 01110100 |(dec)-> 116
-*/
- 
-char * binary_view (char *buffer, unsigned char bits)
-{
-    register i, j;
-   
-    for (i = 0, j = 8; i < 8; bits >>= 1, i++)
-        buffer[--j] = (bits & 0x1) + '0';    
-   
-    return buffer;
-}
- 
-void binary_str (char *args)
-{
-    char buffer[9] = { 0 };
-   
-    puts(" CHAR\t\tBINARY\t\tASCII");
-    while (*args) {
-        printf("(char)-> %c |(bin)-> %s |(dec)-> %d\n",
-               *args, binary_view(buffer, *args), *args);
-        args++;
-    }
 }
 
 
@@ -454,7 +409,7 @@ char *ListDir(char *file2list,int MAX)
 {
  DIR *d;
  struct dirent *dir;
- char *ret=alloca(sizeof(char)*MAX);
+ char *ret=xmalloc(sizeof(char)*MAX);
 
  d = opendir(file2list);
  
@@ -470,6 +425,7 @@ char *ListDir(char *file2list,int MAX)
   strncat(ret,"\n",1);
  }  
 
+ free(ret);
  closedir(d);
  return ret; 
 }   
@@ -524,7 +480,7 @@ void mergesort(int *array, size_t first, size_t last)
 
  int *temp;
  size_t i = first,j = middle + 1,tp = 0;
- temp = (int *) alloca(sizeof(int) * (last - first + 1));
+ temp = (int *) xmalloc(sizeof(int) * (last - first + 1));
 	       
  while(i <= middle && j <= last)
  {
@@ -599,7 +555,7 @@ char *RandomIp(void)
  r3 = 1+(int) (255.0*rand()/(RAND_MAX+1.0));          
  r4 = 1+(int) (255.0*rand()/(RAND_MAX+1.0));          
 
- ipRand=alloca(12*sizeof(char *));
+ ipRand=xmalloc(12*sizeof(char *));
  sprintf(ipRand,"%d.%d.%d.%d",r1,r2,r3,r4); 
 
  return ipRand; 
@@ -736,43 +692,86 @@ char *strrev(char *str)
 }
 
 
-// simple split return array of strings between string separator
-char **split(char *string, char separator, int arraySize)
+char *substr(char *src, const int start, const int count)
 {
- int inicio=0,count=2,i=0,x=0;
- char **newarray;
-
- while(string[i] != '\0')
+ char *tmp,*tmp2;
+ tmp = (char *)xmalloc(count+1);
+ if (tmp == NULL) 
  {
-// numero de elementos que tera nosso array 
-  if(string[i]==separator)
-   count++;
-  i++;              
+  DEBUG("error");
+  return NULL;
  }
 
- arraySize=count-1;
- newarray=calloc(count,sizeof(char*));
- i=0;
-
- while(*string!='\0') 
- {
-  if(*string==separator) 
-  {
-   newarray[i]=calloc(x-inicio+2,sizeof(char));
-   strncpy(newarray[i],string-x+inicio,x-inicio);
-   newarray[i][x-inicio+1]='\0'; 
-   inicio=x;
-   inicio++;
-   i++;
-  }
-  string++;
-  x++;
- }
-        
- newarray[i]=calloc(x-inicio+1,sizeof(char));
- strncpy(newarray[i],string-x+inicio,x-inicio);
- newarray[++i]=NULL;
+ strncpy(tmp, src+start, count);
+ tmp[count] = '\0';
+ strncpy(tmp2,tmp,count);
  
- return newarray;
+ free(tmp);
+
+ return tmp;
+}
+
+// simple split return array of strings between string separator
+char **split(char *src, const char *token, int *total)
+{ 
+ char **str;
+ register int i, j, count, item, start;
+ int len;
+
+ if(!src || !token) 
+ {
+  *total = 0;
+  return NULL;
+ }
+
+ count = item = start = 0;
+ j = 1;
+ len = strlen(src);
+
+ for(i = 0; i < len; i++) 
+ {
+  if(src[i] == *token)
+   count++;
+ }
+
+ if(!count) 
+ {
+  *total = 0;
+  return NULL;
+ }
+
+ str = (char **)xmalloc(count * sizeof(char *));
+ if(str == NULL)
+  DEBUG("error");
+
+ for(i = 0; i < len; i++) 
+ {
+  if(src[i] != *token)
+   j++;
+  else {
+   str[item] = (char *)xmalloc(j-start);
+    if (str[item] == NULL) 
+    {
+     DEBUG("error");
+     return NULL;
+    }
+   *(str+item) = substr(src, start, j-1);
+   str[item][j-start-1] = '\0';
+   item++;
+   start = j++;
+  }
+ }
+
+ *(str+count) = (char *)xmalloc(j);
+ if(str[count] == NULL)
+  DEBUG("error");
+
+ str[count] = substr(src, start, j);
+ str[count][j-start] = '\0';
+ *total = ++count;
+
+ free(str);
+
+ return str;
 }
   
