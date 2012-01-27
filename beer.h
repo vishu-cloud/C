@@ -662,7 +662,56 @@ void urlobfuscator (char * url, char * obf)
    obf[i*2] = 0;
 }
 
+//base 64 encode
+static inline char* b64_encode(char* str, unsigned long len) 
+{
 
+  const char b64[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                     "abcdefghijklmnopqrstuvwxyz"
+                     "0123456789+/";
+  char *ret, *chunk;
+
+  chunk = malloc(((len + 3) << 2) / 4);
+  ret=chunk;
+
+   do {
+    if (len >= 3) 
+    {
+      unsigned long bitwise = (str[0] << 16) | (str[1] << 8) | str[2];
+
+      *(chunk++) = b64[bitwise >> 18];
+      *(chunk++) = b64[(bitwise >> 12) & 0x3F];
+      *(chunk++) = b64[(bitwise >> 6) & 0x3F];
+      *(chunk++) = b64[bitwise & 0x3F];
+      len -= 3;
+      str += 3;
+
+    } else if (len == 2) {
+      unsigned long bitwise = (str[0] << 16) | (str[1] << 8);
+
+      *(chunk++) = b64[bitwise >> 18];
+      *(chunk++) = b64[(bitwise >> 12) & 0x3F];
+      *(chunk++) = b64[(bitwise >> 6) & 0x3D];
+      *(chunk++) = '=';
+      len -= 2;
+      str += 2;
+
+    } else {
+      unsigned long bitwise = (str[0] << 16);;
+
+      *(chunk++) = b64[bitwise >> 18];
+      *(chunk++) = b64[(bitwise >> 12) & 0x3F];
+      *(chunk++) = '=';
+      *(chunk++) = '=';
+      len--;
+      str++;
+    }
+  } while(len); 
+  
+  *chunk=0;
+
+  return ret;
+}
 //func by ryonagana
 void changeCharacter(char *dest, const char* str, const char search, const char replace)
 {
@@ -692,7 +741,7 @@ char *strrev(char *str)
 }
 
 
-char *substr(char *src, const int start, const int count)
+char *StrChunk(char *src, const int start, const int count)
 {
  char *tmp,*tmp2;
  tmp = (char *)xmalloc(count+1);
@@ -755,7 +804,7 @@ char **split(char *src, const char *token, int *total)
      DEBUG("error");
      return NULL;
     }
-   *(str+item) = substr(src, start, j-1);
+   *(str+item) = StrChunk(src, start, j-1);
    str[item][j-start-1] = '\0';
    item++;
    start = j++;
@@ -766,7 +815,7 @@ char **split(char *src, const char *token, int *total)
  if(str[count] == NULL)
   DEBUG("error");
 
- str[count] = substr(src, start, j);
+ str[count] = StrChunk(src, start, j);
  str[count][j-start] = '\0';
  *total = ++count;
 
