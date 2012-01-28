@@ -29,13 +29,13 @@ is held by Apache license 2.0
 -----------------------
 Beer simple C header
 
-Authors: Cooler_,m0nad,ryonagana,b4r0n,utroz
+Authors: Cooler_,m0nad,ryonagana,b4r0n,utroz,mentebinaria
 E-mail: c00f3r[at]gmail[dot]com
 date: 03/08/2011
 
 thanks: 
   _mlk_,m0nad,
-  I4K,sigsegv,b-man,kov,utroz,eremitah,vorazbr,
+  I4K,sigsegv,b-man,kov,utroz,eremitah,vorazbr,mentebinaria
   delfo,c0lt7r,B4r0n,joey,fokerbug,
   zepplin,voidpointer,muzgo,memset,b4r0n,novato_br...
   
@@ -823,4 +823,32 @@ char **split(char *src, const char *token, int *total)
 
  return str;
 }
-  
+
+// return string of bin file, coded by Mente Binária "http://www.mentebinaria.com.br/"
+void strings(FILE *fp)
+{
+   unsigned char byte;
+   int aux=0;
+   int ofs=0;
+
+   while (fread(&byte, sizeof(unsigned char), 1, fp))
+   {   
+      if (aux==1)
+      {   
+         putchar('\n');
+         printf("%#x  ", ofs);
+      }   
+      else if (!ofs && isprint(byte))
+         printf("0x0  ");
+
+      if (isprint(byte))
+      {   
+         putchar(byte);
+         aux=0;
+      }   
+      else aux++;
+
+      ofs++;
+   }   
+   putchar('\n');
+}
