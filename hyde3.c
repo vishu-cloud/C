@@ -63,9 +63,7 @@ E-mail: c00f3r[at]gmail[dot]com
 date: 17/03/2010
 BugSec Security TEAM
 http://code.google.com/p/bugsec/
-thanks: m0nad,_mlk_,IAK,sigsegv,b4r0n,MenteBinaria,
-f117,delfo,c0lt7r,joey,fokerbug,zepplin,otacon,backbone,
-nibbles,voidpointer,muzgo,nbrito .
+thanks: m0nad,_mlk_,IAK,sigsegv,b4r0n,MenteBinaria,f117,delfo,c0lt7r,joey,fokerbug,zepplin,otacon,backbone,nibbles,voidpointer,muzgo...
  
 */
 #include <stdio.h>    
@@ -113,9 +111,12 @@ void *xmalloc(unsigned int len)
  return ptr;
 }
 
+
+// thanks m0nad and sigsegv for solution ;-)
 in_addr_t RandomIp() 
 {
- return rand()%0xffffffff + 0x1;
+  srand(time(NULL));
+  return rand()%0xffffffff + 0x1;
 }
      
 //calculo feito afim de checar a integridade 
@@ -578,7 +579,6 @@ int main(int argc, char *argv[])
  free(ThreadArgv);
  free(StrPort);
  free(StrChoice);
-// free(remetente);
 
  return 0;
 }    
