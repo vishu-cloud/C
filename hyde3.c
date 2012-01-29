@@ -111,11 +111,8 @@ void *xmalloc(unsigned int len)
  return ptr;
 }
 
-
-// thanks m0nad and sigsegv for solution ;-)
 in_addr_t RandomIp() 
 {
-  srand(time(NULL));
   return rand()%0xffffffff + 0x1;
 }
      
@@ -424,6 +421,8 @@ int main(int argc, char *argv[])
  long long int number=500;
  int8_t rc1;
     
+ srand(time(NULL));
+
  if(argc < 6) 
  {
   help();    
