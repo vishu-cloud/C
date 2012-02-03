@@ -1,6 +1,6 @@
 <html>
 <head>
-  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8" />
 <title>Estruturas em C por Cooler_</title>
 <meta name="author" content="BotecoUnix" />
 <meta name="generator" content="VIM" />
@@ -107,17 +107,17 @@ Não tive tempo de passar corretor ortográfico  ;)
 com "arrays(vetores)" e com "pointers(apontadores)",também darei uma 
 explanação para alocação de memória usando "struct" e "arrays",Tentarei 
 passar exemplos interativos para que assim você leitor possa entender 
-melhor e não como um paradoxo .vamos ver Pilha,lista circular
+melhor e não como um paradoxo.vamos ver Pilha,lista circular
 sistemas de cadastros e um poco de persistência de dados. algumas 
 explicações tiradas do Livro do K&R "ansi C", e do livro "C prime plus"
 e o livro do Tanembaum de sistemas operacionais para explicar relação 
 de pilha e lista circular com escalonamento,do mais uma singela explicação
-de regex em C e Banco de dados no final.
+de regex em C no final.
  
  Motivação, muitos amigos me procurando buscando ajuda para soluções
 simples em linguagem C,Este paper dedico ao meu amigo "_Mlk_" o Renan
 e ao "delfo" para que eles quando entrarem em estrutura de dados não 
-tomem uma surra feia,á amigos como sigsegv,m0ad,iak do BugSec grupo de estudos 
+tomem uma surra feia,á amigos como IAK e m0nad do BugSec grupo de estudos 
 que faço parte,grande abraço...
 
 
@@ -413,7 +413,7 @@ agenda simples
 #include <stdio.h>
 #include <stdlib.h>
 
-// by Cooler agenda exemplo
+// by Cooler agenda exemplo,  feita no ano de 2010
 
 //limite cadastros
 #define LIMITE 10 
@@ -427,11 +427,20 @@ struct agenda  {
  int ra;
 };
 
-struct agenda lista[LIMITE],carry;
+struct agenda list[LIMITE],carry;
+struct agenda *lista=list;
+
+int cmp(const void *a, const void *b)
+{
+//faz o casting para struct e verifica em ordem decrescente 
+ struct agenda *ia = (struct agenda *)a;
+ struct agenda *ib = (struct agenda *)b;
+ return (ia->ra < ib->ra);
+}
 
 void banner()
 {
- puts("\ncode agenda by cooler\n digite numero da opção 0- exit 1 inserir ,2 remover , 3 listar\n");
+ puts("\ncode agenda by cooler\n digite numero da opção 0- exit 1 inserir ,2 remover , 3 listar , 4 listar em ordem de ra\n");
 }
 
 void inserir (int count)
@@ -465,7 +474,7 @@ void delete(int count)
 #endif
 
  count3=count;
- while(count != -1)
+ while(count)
  {
    if(lista[count].ra == position)
    {   
@@ -486,19 +495,18 @@ void delete(int count)
 
 void listar(int count)
 {
- while(count!=-1)
+ while(count)
  {
   printf("Nome: %s  RA: %d   position: %d\n",lista[count].nome,lista[count].ra,count);
   count--;
  }
 }
 
-
 int main()
 {
  int escolha=1,count=0;
 
- while(escolha != 0)
+ while(escolha)
  {
   banner();
   scanf("%d",&escolha);
@@ -508,8 +516,8 @@ int main()
   switch(escolha)
   {
    case 1:
-    inserir(count);
     count++;
+    inserir(count);
    break;
  
    case 2:
@@ -520,6 +528,11 @@ int main()
    case 3:
     listar(count);
    break;
+
+   case 4:
+    qsort(list,count,sizeof(struct agenda),cmp);
+    listar(count);
+   break;
   }
  }
 
@@ -528,6 +541,9 @@ int main()
  return 0;
 }
 ========================================Code
+
+agora a biblioteca
+exemplo
 
 
 ======================================== Code
