@@ -107,17 +107,17 @@ Não tive tempo de passar corretor ortográfico  ;)
 com "arrays(vetores)" e com "pointers(apontadores)",também darei uma 
 explanação para alocação de memória usando "struct" e "arrays",Tentarei 
 passar exemplos interativos para que assim você leitor possa entender 
-melhor e não como um paradoxo sem solução.vamos ver Pilha,lista circular
+melhor e não como um paradoxo .vamos ver Pilha,lista circular
 sistemas de cadastros e um poco de persistência de dados. algumas 
 explicações tiradas do Livro do K&R "ansi C", e do livro "C prime plus"
 e o livro do Tanembaum de sistemas operacionais para explicar relação 
 de pilha e lista circular com escalonamento,do mais uma singela explicação
-de regex em C no final.
+de regex em C e Banco de dados no final.
  
  Motivação, muitos amigos me procurando buscando ajuda para soluções
 simples em linguagem C,Este paper dedico ao meu amigo "_Mlk_" o Renan
 e ao "delfo" para que eles quando entrarem em estrutura de dados não 
-tomem uma surra feia,á amigos como IAK e m0nad do BugSec grupo de estudos 
+tomem uma surra feia,á amigos como sigsegv,m0ad,iak do BugSec grupo de estudos 
 que faço parte,grande abraço...
 
 
