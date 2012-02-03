@@ -1,0 +1,2310 @@
+<html>
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+<title>Estruturas em C por Cooler_</title>
+<meta name="author" content="BotecoUnix" />
+<meta name="generator" content="VIM" />
+<style type="text/css">
+<!--
+body {background-color:#31393A; 
+background-image: url("orange.jpg");
+background-repeat: no-repeat;
+background-position: right top; 
+background-attachment: scroll;
+
+
+color:#ffffff; white-space:pre; font-family: monospace; font-size:1em;}
+A {text-decoration:underline; color:#ffffff;}
+A:hover {text-decoration: none; color:#000000; background-color:#ffffff;}
+div.atitle {border:0px; margin:0px; padding:0px; font-size:1em; font-weight:bold;}
+div.acode {border:solid 1px #00ff00; background-color:#c3c3c3; color:#000000; margin: 1em; padding:1em; font-family: monospace; font-size:0.9em;}
+div.alist {border:solid 1px #00ff00; margin: 1.5em; padding:1em; font-family: monospace; font-size:0.9em;}
+
+.blogs {font-size: 10pt; width: 49em; padding: 5px;}
+.blogs A {color: lightblue; padding-top: 0;}
+.blogs A:hover {color: #000000; background-color:lightblue; padding-top: 0;}
+
+.blogs H1 {font-size: 11pt; margin-bottom: 0;}
+.mkdsays {background: #404040;;}
+.code {width: 46em;  overflow: auto; border: 1px dotted darkgrey; padding: 5px;}
+
+//-->
+</style>
+</head>
+<body>
+<pre>
+<div class="blogs">
+ ____        _                 _    _       _      
+|  _ \      | |               | |  | |     (_)     
+| |_) | ___ | |_ ___  ___ ___ | |  | |_ __  ___  __
+|  _ < / _ \| __/ _ \/ __/ _ \| |  | | '_ \| \ \/ /
+| |_) | (_) | ||  __/ (_| (_) | |__| | | | | |>  < 
+|____/ \___/ \__\___|\___\___/ \____/|_| |_|_/_/\_\ 
+ <FONT FACE="Verdana" COLOR="#00C7C2">     ...:::Ajudando povo Unix Like desde 2006:::...</FONT>
+
+</div>
+<div class="blogs">
+# language: Portuguese
+# Title: Estruturas de dados em C
+cooler@malloc:~$ date
+Qui Jul 22 13:45:46 BRT 2010
+cooler@malloc:~$ cat struct.txt      _               _
+                                    |\\             //|  
+ today we study structures in C!!   | \\  _ ///__  // |  What i do Brain ?
+           _                _       |  \\/_______\//  |   
+          /~\\            //~\      |  Y |   |   ||Y  |
+         |   \\          //   |     |   \|   |   |/   | 
+         [    ||        ||    ]     \    |  o|o  ||  /
+         ] Y  ||        ||  Y [      \__  \_--_ /___/
+         |  \_|l,------.l|_/  |       /.-\(____) /--.\
+         |   >'          `<   |       `--(______)----'
+         \  (/~`-^____^-'~\)  /           U// U / \
+          `-_>-_(@)__(@)_-<_-'            / \  / / |
+              /   (__)   \               ( .) / / /
+              \___/__\___/                `.`' /  \      ART and CODE by Cooler_
+               /__`--'__\                  |`-'    |
+            /\(__,>-~~ __)                 |       |__
+         /\//\\(  `--~~ )                 _l       |--:.
+         '\/  <^\      /^>               |  `   (  <   \\
+              _\ >-__-< /_             ,-\  ,-~~->. \   `:.___,/site: BotecoUnix.com.br  
+             (___\    /___)           (____/    (____)    `---' Autor: Antonio "Cooler_"
+                                                                 contato: c00f3r[at]gmail.com
+<b>Indice</b>
+==========
+00-Explanação ao Conteudo
+01-Entendendo Estruturas "struct","Arrays with struct" e 
+ "struct of struct" com exemplo biblioteca
+02-Estruturas com ponteiros "Struct with Pointers", exemplo Agenda e Biblioteca
+03-Alocação de memória com "struct" e "array",exemplo com Pilha "Stack".
+04-Listas encadeadas, exemplo Lista Circular dublamente encadeada
+05-Usando ENUM,Unions e typedef
+06-Validação de dados com Regex e fazendo Parsers
+07-Trabalhando com DB usando DBI e SQLite3 
+08-Bibliografia
+09-Agradecimentos
+
+<FONT FACE="Verdana" COLOR="#75F38F">
+*Sugiro olhar o indice e ir dando Ctrl+F nos números dos capítulos
+caso queira ver algo especifico...
+
+*Para ler este paper,use um navegador decente como firefox,opera e manipule 
+ o Zoom se o tamanho da fonte não estiver bom...
+
+*Os códigos aqui escrítos em C tem motivos didáticos,são funcionais porem
+ caso forem implementados em sistemas reais,deve-se tomar cuidado com funções
+ perigosas como strcpy,printf tomar cuidado com Buffer Overflow,memory leaks
+ format string etc... 
+
+*caso de erro na compilação,na header troque ex: "stdio.h" por < stdio.h>
+</FONT>
+
+Não tive tempo de passar corretor ortográfico  ;)
+
+<b>00-Explanação ao Conteúdo</b>
+=============================
+
+  Neste paper irei explicar como trabalhar com "Struct(estrutura)" e 
+com "arrays(vetores)" e com "pointers(apontadores)",também darei uma 
+explanação para alocação de memória usando "struct" e "arrays",Tentarei 
+passar exemplos interativos para que assim você leitor possa entender 
+melhor e não como um paradoxo sem solução.vamos ver Pilha,lista circular
+sistemas de cadastros e um poco de persistência de dados. algumas 
+explicações tiradas do Livro do K&R "ansi C", e do livro "C prime plus"
+e o livro do Tanembaum de sistemas operacionais para explicar relação 
+de pilha e lista circular com escalonamento,do mais uma singela explicação
+de regex em C no final.
+ 
+ Motivação, muitos amigos me procurando buscando ajuda para soluções
+simples em linguagem C,Este paper dedico ao meu amigo "_Mlk_" o Renan
+e ao "delfo" para que eles quando entrarem em estrutura de dados não 
+tomem uma surra feia,á amigos como IAK e m0nad do BugSec grupo de estudos 
+que faço parte,grande abraço...
+
+
+<b>01-Entendendo Estruturas "structs"</b>
+===================================
+
+Uma estrutura é uma coleção de uma ou mais variáveis possívelmente 
+de tipos diferentes colocadas juntas sob um unico nome para manipulação
+conveniente.em outras palavras sendo direto você pode usar estruturas
+desde um sistema simples de cadastro até arvores,grafos outras aplicações...
+
+Antes de passar o exemplo vou explicar o programa que vou passar para nosso
+estudo, que esta separado "por case"
+
+entendendo o "struct"
+
+struct livro {                  
+ char titulo[MAX]; 
+ char autor[MAX]; 
+ float valor; 
+}; 
+
+ nome da nossa estrutura é "livro"
+ e o array para armazenar dados chamamos de "livraria"
+
+ "struct livro livraria[MAX]" 
+
+ Ilustrando estes dados
+
+ +--------------+            +----------------------+
+ | livraria[0] / =-------->> |  livraria[0].titulo  |-----> cada elemento tem array de N blocos 
+ |             \    \        +----------------------+             [][][][][][][][][][][]....
+ +--------------+    \       +---------------------+ 
+                     |=--->> |  livraria[0].autor  |
+                     |       +---------------------+
+                     |       +---------------------+
+                     |=--->> |  livraria[0].valor  |
+                             +---------------------+
+
+ +--------------+            +----------------------+
+ | livraria[1] / =-------->> |  livraria[1].titulo  |
+ |             \    \        +----------------------+
+ +--------------+    \       +---------------------+ 
+                     |=--->> |  livraria[1].autor  |
+                     |       +---------------------+
+                     |       +---------------------+
+                     |=--->> |  livraria[1].valor  |
+                             +---------------------+
+
+ E assim vai dependendo dos cadastros inseridos... 
+ isso justifica a listagem vide no código "case 1"
+
+ Já "case 2" adição de dados nada de mais apenas alocamos os dados na posição desejada
+ apartir de uma certa entrada do usuário..
+
+ "case 3" nada de mais mesma lógica da listagem porem usei função "strstr" da header "string"
+  para achar "livraria[?].titulo" igual ao que o cliente digitou.
+
+ "case 4" aqui seguimos mesma lógica da "case 3" para achar elemento para ser removido porem
+ logo que achamos,então usamos uma estrutura provisória apenas para alocar estrutura dados da
+ estrutura a ser removida, seguinto sequinte lógica
+
+valor:    [3][2][8][1][4] 
+elemento:  0  1  2  3  4
+
+Suponhamos que foi escolhido elemento 2 para ser removido cujo valor é "8"
+Então fazemos uma troca até o ultimo elemento ser aquele que foi escolhido a ser removido
+
+1 [ 3 ]     1 [ 3 ]     1 [ 3 ]      1 [ 3 ]
+2 [ 2 ]     2 [ 2 ]     2 [ 2 ]      2 [ 2 ]
+3 [ 8 ] \   3 [ 1 ]     3 [ 1 ]      3 [ 1 ]
+4 [ 1 ] /   4 [ 8 ] \   4 [ 4 ]      4 [ 4 ]
+5 [ 4 ]     5 [ 4 ] /   5 [ 8 ] <---= então no fim da troca usamos "cont--"
+                                      só para constar o vetor não foi apagado de verdade
+                                      para tal feito sete o último vetor para "NULL"
+
+isso justifica o uso do rotulo "pon" que usa mesma estrutura de "livraria"
+
+index = numero do elemento do array
+
+ pon=livraria[index];
+ livraria[index]=livraria[index+1];
+ livraria[index+1]=pon;
+ 
+outra forma
+
+    A          B          C
+ |     |    |     |    |     |
+ |~~~~~|    |~~~~~|    |     |
+ |     |    |     |    |     |
+ |     |    |     |    |     | 
+ +-----+    +-----+    +-----+
+      
+Na lógica imaginamos como se fosse 3 copos sendo dois cheios e um vazio 
+para fazer a troca entre A e B,nada impossível com terceiro copo "c=b; b=a; a=c;" 
+
+E se só tive-se  copo "A" e "B" ?
+Tem uma forma diferente usando XOR "^", para usar swap
+mas desta vez descarto esta forma, que em elementos comuns com INT seria
+
+int a = 10;
+int b = 20;
+
+a = a ^ b:
+b = a ^ b;
+a = a ^ b;
+
+está explicação do uso do XOR fica a créditos do mestre dos magos "I4K"
+grande amigo do grupo que faço parte "BugSec",tem outras formas de fazer
+a troca em fim programação nunca você tem uma opção unica opção...
+
+Finalmente "case 5" aqui não tem muito truque, apenas chamamos a função "Qsort"
+que usa o algoritmo de organização "sort" chamado "Quicksort",usamos a função
+"sort_char" e "strcmp" para fazer comparação entre strings,da header
+"string.h",Bom lembrando que sistema é "case sentive", "A" fica primeiro que 
+"a" valor convertido decimal de "A" é maior,caso queira criar sua própria função 
+quicksort procure na Rede algum material sobre o mesmo é muito fácil achar...
+
+======================================== Code
+/*
+ Catalogo de Livraria
+Exemplo de como usar "Arrays of Struct" em C
+ 
+ Autor: Cooler_
+ contato: c00f3r@gmail.com , tony.unix@yahoo.com.br
+ webSite: BotecoUnix.com.br 
+
+*/
+#include "stdio.h"
+#include "string.h" 
+#include "stdlib.h"
+#define MAX 100           
+
+void opcao_menu() {
+ int i;
+ char *banner[] = {
+  "-----------------------------------------------------------",
+  "Programa Livraria",
+  "coded by Cooler_",
+  "(1)Listar",
+  "(2)Adicionar ",
+  "(3)Procurar livro",
+  "(4)Remover livro",
+  "(5)Mostrar dados em Ordem Alfabética usando QuickSort",
+  "(6)Fim",
+  "-----------------------------------------------------------",
+ };
+ for(i=0; i<=9; i++) printf("%s\n",banner[i]);
+}
+
+int sort_char( const void *a, const void *b) {
+ return( strcmp(a,b) );
+}
+
+struct livro {                  
+ char titulo[MAX]; 
+ char autor[MAX]; 
+ float valor; 
+}; 
+
+int main() {
+ int op=0;  
+ struct livro livraria[MAX], pon;  
+ int count=0; 
+ int x,index; 
+ char achar[MAX];
+
+ while(op!=6) 
+ { 
+  opcao_menu();
+  scanf("%d",&op); getchar();
+
+  switch(op) 
+  { 
+   case 1:
+    printf("Listando livros:\n"); 
+    for (index = 0; index < count; index++) 
+     printf("%s de %s , valor: $%.2f\n", livraria[index].titulo, 
+          livraria[index].autor, livraria[index].valor); 
+    break;
+ 
+   case 2: 
+    printf("Digite Titulo do livro.\n"); 
+     fgets(livraria[count].titulo,sizeof(livraria[count].titulo),stdin);
+     livraria[count].titulo[strlen(livraria[count].titulo)-1] = '\0'; 
+    printf("Digite o autor.\n"); 
+     fgets(livraria[count].autor,sizeof(livraria[count].autor),stdin);
+     livraria[count].autor[strlen(livraria[count].autor)-1] = '\0'; 
+    printf("Digite o valor.\n"); 
+     scanf("%f", &livraria[count++].valor); 
+     while (getchar() != '\n') continue;              
+    break;
+
+   case 3: 
+    printf("Digite Titulo do livro a procurar.\n"); 
+     fgets(achar,sizeof(achar),stdin);
+     achar[strlen(achar)-1] = '\0';  
+    for (index = 0; index < count; index++) 
+    { 
+      if(strstr(livraria[index].titulo, achar) != NULL) 
+       printf("%s de %s , valor: $%.2f\n", livraria[index].titulo, 
+          livraria[index].autor, livraria[index].valor); 
+    }        
+    break;
+
+   case 4:
+    x=1; 
+    printf("Digite Titulo do livro a deletar.\n"); 
+     fgets(achar,sizeof(achar),stdin);
+     achar[strlen(achar)-1] = '\0';  
+    for (index = 0; index < count; index++) 
+    { 
+      if(strstr(livraria[index].titulo, achar) != NULL) 
+      {  
+       printf("dado a ser removido \n %s de %s , valor: $%.2f\n", livraria[index].titulo, 
+       livraria[index].autor, livraria[index].valor);
+       pon=livraria[index];
+       livraria[index]=livraria[index+1];
+       livraria[index+1]=pon;
+       x=0;
+      }
+    }            
+    if(!x) count--;
+    break;
+   
+   case 5:
+    printf("Listando livros em Ordem Alfabética:\n"); 
+    qsort((void *)livraria, count, sizeof(livraria[0]), sort_char);
+    for (index = 0; index < count; index++) 
+    printf("%s de %s , valor: $%.2f\n", livraria[index].titulo, 
+          livraria[index].autor, livraria[index].valor); 
+    break;
+  }  
+
+ }
+ return 0;
+} 
+
+======================================== EOF
+
+Mudando de assunto e se fosse uma estrutura dentro da outra ?
+Obviamente podemos criar estruturas que contenham outras estruturas:
+
+Um exemplo pratico eh:
+
+struct boss {
+ float altura;
+ float peso;
+ char* nome;
+ int idade;
+};
+
+Isso define um novo tipo de variavel, chamada boss.
+Podemos 'criar' uma pessoa da seguinte forma:
+
+struct boss rotulo;
+
+E podemos modificar os subvalores de rotulo:
+
+rotulo.altura = 1.70;
+rotulo.peso = 60;
+rotulo.nome = "Dimitri Vashnov";
+rotulo.idade = 18;
+
+Obviamente podemos criar estruturas que contenham outras estruturas:
+
+struct grupo {
+ struct boss chefe;
+ int tamanho;
+};
+
+Assim, poderiamos declarar dv o chefe o grupo assim:
+
+struct grupo grupo_do_rotulo;
+
+grupo_do_rotulo.chefe = rotulo;
+grupo_do_rotulo.tamanho = 1;
+
+Assim, a idade do chefe seria
+
+grupo_do_rotulo.chefe.idade
+
+
+<b>02-Pointers with Struct</b>
+==========================
+
+Agora o segundo exemplo apontadores com estruturas de vetores 
+"Pointers of structs",mesma lógica do anterior porem com ponteiros
+
+agenda simples
+
+========================================Code
+#include <stdio.h>
+#include <stdlib.h>
+
+// by Cooler agenda exemplo
+
+//limite cadastros
+#define LIMITE 10 
+#define BUFFER 32
+
+//macro Anti Bug do "new line" comum em alguns OS, 1 para ativar 0 para desativar
+#define ANTBUG 1
+
+struct agenda  {
+ char nome[BUFFER];
+ int ra;
+};
+
+struct agenda lista[LIMITE],carry;
+
+void banner()
+{
+ puts("\ncode agenda by cooler\n digite numero da opção 0- exit 1 inserir ,2 remover , 3 listar\n");
+}
+
+void inserir (int count)
+{
+ if(count != LIMITE)
+ {
+  puts("\ndigite nome");
+  scanf("%s",lista[count].nome);
+#if ANTBUG
+  getchar();
+#endif
+  puts("\ndigite RA");
+  scanf("%d",&lista[count].ra);
+#if ANTBUG
+  getchar();
+#endif
+ }
+ else {
+  puts("agenda cheia");
+ }
+}
+
+void delete(int count)
+{
+ int position=0,count3=0,count2=0;
+
+ puts("qual RA para remover cadastro ?\n");
+ scanf("%d",&position);
+#if ANTBUG
+  getchar();
+#endif
+
+ count3=count;
+ while(count != -1)
+ {
+   if(lista[count].ra == position)
+   {   
+    count2=count;
+    while(count2<count3)
+    {
+     carry=lista[count2];
+     lista[count2]=lista[count2+1];
+     lista[count2+1]=carry;
+     count2++;
+    }
+    break;
+   }
+  count--;
+ }
+
+}
+
+void listar(int count)
+{
+ while(count!=-1)
+ {
+  printf("Nome: %s  RA: %d   position: %d\n",lista[count].nome,lista[count].ra,count);
+  count--;
+ }
+}
+
+
+int main()
+{
+ int escolha=1,count=0;
+
+ while(escolha != 0)
+ {
+  banner();
+  scanf("%d",&escolha);
+#if ANTBUG
+  getchar();
+#endif
+  switch(escolha)
+  {
+   case 1:
+    inserir(count);
+    count++;
+   break;
+ 
+   case 2:
+    delete(count);
+    count--;
+    break;
+ 
+   case 3:
+    listar(count);
+   break;
+  }
+ }
+
+ puts("saindo");
+ sleep(3);
+ return 0;
+}
+========================================Code
+
+
+======================================== Code
+/*
+     ..:: Catalogo de Livraria ::..
+
+:: Exemplo de como usar arrays of Struct com ponteiros em C
+ 
+ Autor: Antonio "Cooler_"
+
+ Contato: c00f3r@gmail.com 
+          tony.unix@yahoo.com.br
+
+ WebSite: BotecoUnix.com.br 
+          BugSec.com.br 
+          coolerlab.wordpress.com
+
+*/
+#include "stdio.h"
+#include "string.h" 
+#include "stdlib.h"
+#define MAX 100  
+
+void opcao_menu() {
+ int i;
+ char *banner[] = 
+ {
+  "-----------------------------------------------------------",
+  "Programa Livraria",
+  "coded by Cooler_",
+  "(1)Listar",
+  "(2)Adicionar ",
+  "(3)Procurar livro",
+  "(4)Remover livro",
+  "(5)Mostrar dados em Ordem Alfabética usando QuickSort",
+  "(6)Fim",
+  "-----------------------------------------------------------",
+ };
+ for(i=0; i<=9; i++) printf("%s\n",banner[i]);
+}
+
+int sort_char( const void *a, const void *b) {
+ return( strcmp(a,b) );
+}
+
+struct livro {                  
+ char titulo[MAX]; 
+ char autor[MAX]; 
+ float valor; 
+} estante[MAX]; 
+// nosso ponteiro vai apontar para estante
+
+int main(int args, char * argv[]) {
+ int op=0;  
+// dois apontadores
+ struct livro *livraria[MAX], *pon;  
+ int count=0; 
+ int x,index; 
+ char achar[MAX];
+
+ while(op!=6) 
+ { 
+  opcao_menu();
+  scanf("%d",&op); getchar();
+// apontamos para estante
+  livraria[count]=&estante[count];
+
+  switch(op) 
+  { 
+   case 1:
+    printf("Listando livros:\n"); 
+    for (index = 0; index < count; index++)
+/* 
+repare que usaremos a seta "->" para determinar o membro que sera usado na estrutura
+pode ser representado das formas (*st).x ou st->x
+*/
+     printf("%s de %s , valor: $%.2f\n", livraria[index]->titulo, 
+          livraria[index]->autor, livraria[index]->valor); 
+    break;
+ 
+   case 2:  
+    printf("Digite Titulo do livro.\n"); 
+     fgets(livraria[count]->titulo,sizeof(livraria[count]->titulo),stdin);
+     livraria[count]->titulo[strlen(livraria[count]->titulo)-1] = '\0'; 
+    printf("Digite o autor.\n"); 
+     fgets(livraria[count]->autor,sizeof(livraria[count]->autor),stdin);
+     livraria[count]->autor[strlen(livraria[count]->autor)-1] = '\0'; 
+    printf("Digite o valor.\n"); 
+     scanf("%f", &livraria[count]->valor);
+     while (getchar() != '\n') continue;  
+    count++;            
+    break;
+
+   case 3: 
+    printf("Digite Titulo do livro a procurar.\n"); 
+     fgets(achar,sizeof(achar),stdin);
+     achar[strlen(achar)-1] = '\0';  
+    for (index = 0; index < count; index++) 
+      if(strstr(livraria[index]->titulo, achar) != NULL) 
+       printf("%s de %s , valor: $%.2f\n", livraria[index]->titulo, 
+          livraria[index]->autor, livraria[index]->valor);            
+    break;
+
+   case 4:
+    x=1;
+    printf("Digite Titulo do livro a deletar.\n"); 
+    fgets(achar,sizeof(achar),stdin);
+    achar[strlen(achar)-1] = '\0';  
+     for (index = 0; index < count; index++) 
+      if(strstr(livraria[index]->titulo, achar) != NULL)   
+       pon=livraria[index],livraria[index]=livraria[index+1],livraria[index+1]=pon,x=0; 
+     if(!x,count--,puts("dado removido\n")) break; 
+     else puts("não foi achado nada para remover\n");           
+    break;
+   
+   case 5:
+    printf("Listando livros em Ordem Alfabética:\n"); 
+    qsort((void *)estante, count, sizeof(estante[0]), sort_char);
+    for (index = 0; index < count; index++) 
+    printf("%s de %s , valor: $%.2f\n", livraria[index]->titulo,  livraria[index]->autor, livraria[index]->valor); 
+    break;
+  }  
+ }
+ return 0;
+} 
+======================================== EOF
+
+
+<b>03-Alocação de memória de estruturas e vetores</b>
+=================================================
+
+Para Alocação de memória em C,vamos usar a função "malloc()" que usa a "HEAP"
+ilustrando o funcionamento da memória teremos.
+ _______
+| .text | --> seu código em C fica nesse segmento
+|-------|
+| .data | --> nesse segmento váriaveis Global e static inicializadas ex: "int static x=1;"
+|-------|
+|       |
+| .bss  | --> outras variáveis que não seja inicializadas global e static, "int static x" 
+|       |
+|       |    no final da BSS a heap.
+| .heap | --> memória estática ou dinâmica em C para usalá vamos usar função "malloc()"
+|       |     pode utilizar o sistema brk e sbrk.
+|       |     mmap() para reservar potencialmente regiões não contíguas de memória 
+|       |     virtual para o espaço o processo de "endereço virtual.
+|-------|
+|       |
+|.stack | --> variáveis locais, endereços mais altos da memória,usa conceito LIFO,
+|       |     pilha cresce para baixo...
++-------+
+
+heap ea pilha são dinâmicos, ambos crescem em direções diferentes para o outro. 
+Isso minimiza o desperdício de espaço, permitindo que a pilha para ser maior se 
+a pilha é pequeno e vice-versa.
+
+Cada bloco de memória ocupada do heap tem um cabeçalho (header) de 8 bytes 
+representado pela estrutura _HEAP_ENTRY que, como numa lista duplamente ligada, 
+aponta para o próximo bloco e para o bloco anterior.
+Após esse header há outro header de 8 bytes do tipo _LIST_ENTRY quem também é 
+uma lista duplamente ligada. Esse header é usado para apontar para os segmentos
+de memória livres.Por segmento me refiro a um bloco contínuo de memória virtual. 
+
+   Stack  __
+     w  c(..)o   (
+      \__(-)    __)
+          /\   (
+         /(_)___)
+         w /|
+          | \
+         m  m
+vamos ilustrar isso com um programa,código não é meu...
+eu apenas traduzi os comentários para ajudar o pessoal ;)
+
+---------------------- Code
+/*
+ *  mem_sequence.c / ver 0x01 | (C)opyleft 2008 by oozie |  http://blog.ooz.ie/
+ *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ *  Lists memory areas and their location in descending order.
+ *
+ *  This program declares example variables in different memory locations, gets
+ *  their addresses, sorts them and prints a list in descending order. 
+ *
+ *  The program is considered free software; you can redistribute and/or modify
+ *  it under the terms of the GNU General Public License version 3 or any later
+ *  version, as published by the Free Software Foundation; If you do modify it, 
+ *  please leave the  information about the author unchanged.  The full text of 
+ *  latest GPL licence is available at      http://www.gnu.org/licences/gpl.txt
+ */
+
+#include "stdio.h"
+#include "stdlib.h"
+
+#define MEM_TYPES 5
+
+#define STR_STACK "stack"
+#define STR_HEAP  "heap"
+#define STR_BSS   "bss"
+#define STR_CONST "const's"
+#define STR_CODE  "code"
+
+const char const_example[]="string constante";
+
+struct memtype_ptr {
+  int *ptr;
+  char *str;
+}; 
+
+struct memtype_ptr type_pointer[MEM_TYPES];
+
+char bss_example[]="uma variável global";
+
+// usa duas estruturas para buble sort
+void mem_xchg(struct memtype_ptr *a, struct memtype_ptr *b) 
+{
+  struct memtype_ptr tmpmemptr;
+
+  tmpmemptr.str = a->str;
+  tmpmemptr.ptr = a->ptr;
+  a->str = b->str;
+  a->ptr = b->ptr;
+  b->str = tmpmemptr.str;
+  b->ptr = tmpmemptr.ptr;
+}
+
+void print_sorted(int *heap_example, int stack_example) 
+{
+  int i,j;
+// definido os nomes e seus endereços na tabela
+  type_pointer[0].str = STR_HEAP;
+  type_pointer[0].ptr = heap_example;  
+  type_pointer[1].str = STR_BSS;
+  type_pointer[1].ptr = (int *)&bss_example;
+  type_pointer[2].str = STR_STACK;
+  type_pointer[2].ptr = &stack_example;
+  type_pointer[3].str = STR_CODE;
+  type_pointer[3].ptr = (int *)stack_example;
+  type_pointer[4].str = STR_CONST;
+  type_pointer[4].ptr = (int *)&const_example;
+
+  // usamos método bolha para organizar de forma decrescente
+  j=MEM_TYPES;
+   while(j--) 
+    for(i=0; i<j; i++) 
+     if(type_pointer[i].ptr < type_pointer[i+1].ptr)mem_xchg(&type_pointer[i],&type_pointer[i+1]); 
+
+  // mostra a tabela
+  for (i = 0 ; i < MEM_TYPES; i++) 
+     printf("%d.(0x%.8x) %s\n", i+1,(int )type_pointer[i].ptr,type_pointer[i].str);
+  return;
+}
+
+
+int main(void) 
+{
+  int *dyn_allocated, code_example;
+  
+  // pega endereço da memória da função main()
+  code_example=(int )&main;
+
+  // alocação dinâmica par amostrar a HEAP
+  dyn_allocated=(int *)malloc(sizeof(int));
+
+  //mostra endereço de memória na ordem decrescente
+  print_sorted(dyn_allocated, code_example);
+  getchar();
+
+  return 0;
+}
+---------------------- EOF
+
+
+exemplo do uso do malloc para alinhamento 
+para assim facilitar na depuração dos erros
+
+---------------------- CODE
+void * xmalloc (size_t size)
+{
+        void *p;
+        p = malloc (size);
+        if (!p) {
+                 perror ("xmalloc");
+                 exit (EXIT_FAILURE);
+        }
+        return p;
+}
+---------------------- EOF
+
+Agora um exemplo mais calmo usando Pilha e alocação de memória com "struct"
+linha por linha comentada...
+
+ = Objetivo
+  Um deposito de Bebidas precisa manter o controle de caixas empilhadas
+  cada caixa tem no máximo 12 garrafas,faça um programa para cadastrar
+  nome da caixa,quantidade de garrafas e preço de cada garrafa,programa
+  deve ter opção de remover caixa empilhada e mostrar caixas empilhadas com
+  total de custo da caixa somando as garrafas...
+
+======================================== Code
+/*
+  Site: BotecoUnix.com.br
+  Autor: Antonio Cooler  e-mail:tony.unix@yahoo.com.br
+  Licença: BSD
+  Baseado nos ensinamentos do livro do K&R e do livro C completo e total
+ 
+*/
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+
+// Número maximo de chars nas vars
+#define MAX 30
+// Número maximo de caixas
+#define BOX 20 
+
+void opcao_menu() 
+{
+ int i;
+ char *banner[] = {
+        "--------------------------",
+	"Programa Pilha de caixas",
+	"coded by Cooler",
+	"(1)Listar Caixas Empilhadas",
+	"(2)Empilhar Caixa",
+	"(3)Desempilhar Caixa",
+	"(4)Sair do programa",
+        "--------------------------",
+	"> "
+	};
+ for(i=0; i<=7; i++) printf("%s\n",banner[i]);
+}
+
+// estrutura usada
+typedef struct caixa {
+  char nome[MAX];
+  int garrafas;
+  float valor;
+} caixa;
+
+//pegando entrada do usuário e retorna com os mesmos
+caixa adiciona_caixa() 
+{
+ caixa p;
+
+ printf("informe alguns dados\n");
+ printf("o Nome: \n");
+  fgets(p.nome, sizeof(p.nome), stdin);
+  p.nome[strlen(p.nome)-1] = '\0';
+ printf("A quantidade de garrafas:\n"); 
+ scanf("%d",&(p.garrafas));
+// maximo de garrafas por caixa é 12 setamos isso aqui numa condição 
+ p.garrafas=(p.garrafas>12)?12:p.garrafas;
+ printf("O preço:\n"); scanf("%f",&(p.valor));
+ return p;
+}
+
+int main() 
+{
+ int x,y,op=0;
+ float total;
+// ponteiro da nossa estrutura
+ caixa *cad;
+ y=0;
+// alocamos dados na memória
+ cad=(caixa *)calloc(BOX,sizeof(caixa));
+ while(op!=4) 
+ {
+   opcao_menu();
+   scanf("%d",&op); getchar();
+  if(op==1) 
+  { 
+// Mostra a lista de caixas
+   printf("\n Nome      Garrafas     Preço   Total\n");
+   for(x=y-1; x>=0; x--) printf(" %6s %8d %12.2f %7.2f\n", 
+                             cad[x].nome, 
+                             cad[x].garrafas, 
+                             cad[x].valor,
+                             total=cad[x].garrafas*cad[x].valor); 
+  }
+// Adiciona uma caixa e chama a função "adiciona caixa"
+  if(op==2) cad[y]=adiciona_caixa(),y++;
+  
+// remove caixa,subtrai o apontador da proxima adição de dados substitui o dado pelo
+// Escolhido
+  if(op==3) y--; 
+ }
+ free(cad);
+ return 0;
+}
+========================================== EOF
+
+Algoritmo usado é chamado de Pilha,no exterior chamado de Stack "LIFO"
+(que significa Last In, First Out).Poderia dar um exemplo
+de escalonamento ou de processo só que iria almentar a curva de aprendizado.
+Então escolhi a dedo um problema simples,qual melhor forma de aprender pilhas
+"caixas em pilhadas!",está foi minha idéia...
+
+explicando
+Para funções de alocação de memória em C vamos usar seguintes funções
+da Biblioteca “stdlib.h” “calloc”,”malloc” e “realloc”.Outra função 
+desta mesma “Lib” que vamos usar vai ser “rand” que nos retorna um 
+numero randômico para nosso teste.
+
+o “calloc” retorna um apontador para um espaço de um vetor,o espaço 
+é inicializado por zero bytes
+
+o “malloc” retorna um apontado para espaço de um objeto por um 
+tamanho indicado.
+
+o “realloc” altera tamanho do objeto apontado para “p”.
+
+Só para explicar melhor alocação de memória 
+uso de algumas funções da lib "stdlib"
+
+========================================== Code
+// Autor: Cooler
+// Exemplo de alocação dinâmica usando vetores
+// Site:httṕ://BotecoUnix.com.br
+// Biblioteca padrão de entrada e saida
+#include "stdio.h"
+// Biblioteca para alocação de memória e outras tarefas
+#include "stdlib.h"
+ 
+int main() {
+ int i,*v,*m;
+ 
+ printf("vetor iniciando usando calloc\n");
+// alocamos na memoria no vetor "v" 5 blocos sendo "int"
+// repare o uso do "sizeof" ele produz o número de bytes
+// exigidos para armazenar em um objeto do tipo do seu operando
+ v=(int *)calloc(5,sizeof(int));
+// atribuimos valores qualquer usando função rand
+ for(i=0; i<5; i++) v[i]=rand()%100;
+ for(i=0; i<5; i++) printf("%3d",v[i]);
+ 
+ printf("\nvetor ficando maior usando realloc\n");
+// agora alteramos o tamanho da memoria alocada para dez
+// inves de "5" usando funçao realloc
+ v=(int *)realloc(v,10*sizeof(int));
+ for(i=5; i<10; i++) v[i]=rand()%100;
+ for(i=0; i<10; i++) printf("%3d",v[i]);
+ 
+ printf("\nvetor deixando menor usando realloc\n");
+//aqui deixamos de 10 para 3 valor de blocos do vetor
+ v=(int *)realloc(v,3*sizeof(int));
+ for(i=0; i<3; i++) printf("%3d",v[i]);
+ 
+//agora vamos usar malloc
+ printf("\nAgora iniciando um vetor com malloc\n");
+ m=(int*)malloc(sizeof(int)*10);
+ for(i=0; i<10; i++) m[i]=rand()%100;
+ for(i=0; i<10; i++) printf("%3d",m[i]);
+// mostrando o endereço alocado por "m"
+ printf("\nEndereço de 'm' é : %p \n", m);
+//liberamos area alocada com a função "free"
+// se não liberar seu programa pode ter falhas de memory leak
+  free(m); 
+  free(v);
+ return 0;
+}
+========================================== EOF
+
+
+Vai uma dica:
+================
+
+Bom se você não quiser ficar definindo
+
+ m=(int*)malloc(sizeof(valor));
+
+você pode usar a macro 
+#define MALLOC(a) (a *) malloc ( sizeof(a) ) 
+
+então 
+
+m=MALLOC ( var ); 
+
+
+
+ou que tal ver informações do malloc
+========================================== Code
+#include "malloc.h"
+void malloc_stats (void);
+========================================== EOF
+
+gostou quer mais ? "man malloc" good look !
+
+Caso Queira usar Stack invés de Heap pode-se usar "alloca"
+========================================== Code
+#include "alloca.h"
+void * alloca (size_t size);
+========================================== EOF
+
+exemplo de uso do mesmo
+========================================== Code
+int open_sysconf (const char *file, int flags, int mode)
+{
+        const char *etc; = SYSCONF_DIR; /* "/etc/" */
+        char *name;
+        name = alloca (strlen (etc) + strlen (file) + 1);
+        strcpy (name, etc);
+        strcat (name, file);
+        return open (name, flags, mode);
+}
+// veja a mesma função com uso do malloc
+int open_sysconf (const char *file, int flags, int mode)
+{
+        const char *etc = SYSCONF_DIR; /* "/etc/" */
+        char *name;
+        int fd;
+        name = malloc (strlen (etc) + strlen (file) + 1);
+        if (!name) {
+                perror ("malloc");
+                return -1;
+        }
+        strcpy (name, etc);
+        strcat (name, file);
+        fd = open (name, flags, mode);
+        free (name);
+        return fd;
+}
+========================================== EOF
+
+Bom foi um exemplo bem simples,ainda poderiamos falar de mmap(),mais da
+header "malloc.h",brk(),sbrk() mas já seria muita coisa já que não
+usamos todas estas funções neste "paper".
+
+caso não tenha entendido o que é pilha e fila veja
+o exemplo do meu amigo "m0nad"
+========================================== Code
+/*fila e pilha 
+por
+m0nad [at] email.com 
+*/
+#include "stdio.h"
+#include "stdlib.h"
+
+struct dados
+{
+  int *v;
+  int sp;
+};
+
+
+void push ( struct dados *s, int max )
+{
+
+  if ( s->sp+1 < max )
+  {
+    puts ("Numero que deseja colocar: ");
+    scanf ("%d",&s->v[++s->sp] );
+  }
+  else
+   puts ("pilha cheia");
+
+}
+void shift ( struct dados *s )
+{
+  int num , i;
+  if ( s->sp >= 0 )
+  {
+    num = s->v[0];
+    for ( i=0 ;  i < s->sp ; i++) 
+      s->v[i] = s->v[i+1];
+    s->sp--;
+    printf ("Numero retirado da fila: %d\n", num);
+  }
+  else
+    puts ("fila vasia"); 
+}
+void pop ( struct dados *s )
+{
+
+  if ( s->sp >= 0 )
+  {
+    printf ("numero retirado da pilha: %d\n",s->v[s->sp--] );
+  }
+  else
+    puts ("pilha vazia");
+
+}  
+void unshift ( struct dados *s, int max)
+{
+  int i,num;
+  if ( s->sp+1 < max )
+  {    
+    for ( i = ++s->sp ; i>0 ; i-- ) 
+      s->v[i] = s->v[i-1];
+    puts ("Numero que deseja colocar: ");
+    scanf ("%d", s->v );
+  }
+  else
+    puts ("fila cheia"); 
+}
+
+main()
+{
+  int op, n;
+  struct dados s;
+  puts ("Tamanho do vetor");
+  scanf ("%d", &n);
+  s.v = ( int * ) malloc ( n * sizeof(int) );
+  if ( s.v == NULL )
+  {
+    perror ("malloc");
+    exit (1);
+  }  
+  s.sp= -1;
+  do
+  {
+    puts ("1 - push");
+    puts ("2 - pop");
+    puts ("3 - shift");
+    puts ("4 - unshift");
+    puts ("5 - exit");
+    scanf ("%d", &op);
+    switch (op)
+    {
+       case 1:push( &s, n );break;
+       case 2:pop( &s );break;
+       case 3:shift( &s );break;
+       case 4:unshift( &s, n );break;
+    }
+  }while (op != 5);
+
+}
+========================================== EOF
+
+
+
+
+<b>04-Listas encadeadas, exemplo Lista Circular dublamente encadeada</b>
+====================================================================
+
+Bom não era meu intuito falar de algoritmos, mas ja falei de pilhas e 
+listas simples passei por sima do assunto lista encadeada e tal,Mas agora
+vou dar um exemplo prático e completo,passei média de 5 horas para terminar 
+ele devido a uns bugs que só o GDB pode me ajudar...
+
+pergunta chata que você vive fazendo para sue professor...
+<b>Para que Estudar Pilha e lista circular ?</b>
+
+As regras de escalonamento permitem a multiprogramação, tornando possível a 
+"utilização simultânea da CPU" ou seja "threads" por diversos usuários. Existem 
+diversas políticas de escalonamento, entre elas,<b>LIFO "Pilha"</b>, SJF 
+(Shortest Job First), <b>Round Robin(Lista circular)</b>, escalonamento 
+por prioridades e escalonamento utilizando filas múltiplas.
+
+ O algoritmo de escalonamento Round Robin utiliza uma <b>fila circular</b> em 
+que os novos processos são colocados no final da fila, assim como ocorre na
+política FIFO. Porém, nessa política, cada processo possui uma pequena unidade 
+de tempo usualmente chamada de quantum de tempo. Assim que cada processo executa 
+um quantum de tempo, esse processo é interrompido e é colocado no final da fila,
+ocasionando uma troca de contexto, pois a CPU irá executar um quantum de tempo de
+ um outro processo que esteja na fila. O tamanho do quantum, porém, não pode ser 
+muito pequeno pois isso ocasionará muitas trocas de contexto, retardando a execução
+ de cada um dos processos, e também não pode ser muito grande pois isso resultaria 
+em um tempo de resposta muito alto, podendo até mesmo vir a se transformar na 
+política FIFO. 
+
+Entendendo Lista circular dublamente encadeada
+Os processos formam uma lista circular duplamente ligada, denominada lista
+de processos, utilizando os membros "A"("proximo"),  e "C"("anterior") de 
+struct CircularList, em B é o conteudo do struct...
+
+
+       +---------------+             +---------------+
+<------|    |     |    |------>      |    |     |    |----->
+       |A   | B   |C   |       <-----|A   |  B  |C   |
+       +---------------+             +---------------+
+Bom vamos ao exemplo prático, a idéia aqui é não usar vetores e sim a 
+memória, e fazer malabarismo nos registros "anterior"(before),"proximo"(next)
+vamos ao exemplo...
+
+========================================== Code
+#include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+#define ALOCAR(a) (a*)malloc(sizeof(a)) 
+#define MAX 100
+
+struct CircularList {
+ struct CircularList *anterior;  
+ int coluna;                 
+ char nome[MAX];             
+ float valor;              
+ struct CircularList *proximo;  
+};
+
+typedef struct CircularList noh;
+
+void entrada(noh*);     
+void InserirDepois(noh*);  
+noh* InserirAntes(noh*); 
+noh* del(noh*);     
+void search(noh*);   
+void mostrar(noh*);    
+void BuscaColuna(noh*); 
+void BuscaValor(noh*); 
+
+void opcao_menu() {
+ int i;
+ char *banner[] = {
+  "-----------------------------------------------------------",
+  "Programa Lista Circular dublamente encadeada",
+  "coded by Cooler_",
+  "(1)Iniciar noh ",
+  "(2)Inserir antes do noh",
+  "(3)Inserir depoisdo noh",
+  "(4)deletar um noh",
+  "(5)procurar nohs",
+  "(6)mostrar todos dados",
+  "(0)Sair",
+  "-----------------------------------------------------------",
+ };
+ for(i=0; i<=10; i++) printf("%s\n",banner[i]);
+}
+
+
+int main()
+{
+ noh *head;    
+ int opt=1;                 
+ head=ALOCAR(noh);
+ head->proximo=NULL; 
+ head->anterior=NULL;
+ while(opt!=0) 
+ {
+  opcao_menu();
+  scanf("%d",&opt);   
+  switch(opt)
+  {
+   case 1:
+     entrada(head);
+     break;
+
+   case 2:
+     head=InserirAntes(head);
+     break;
+
+   case 3:
+     InserirDepois(head);
+     break;
+
+   case 4:
+     head=del(head);
+     break;
+
+   case 5:
+     search(head); 
+     break;
+  
+   case 6:
+     mostrar(head);
+     break;
+  }
+ }
+ free(head);
+ return 0;
+}
+
+
+void entrada(noh *start)
+{
+ start->anterior=start;
+ printf("digite numero da coluna\n");
+ scanf("%d",&start->coluna);
+ printf("digite o nome\n");
+ getchar();
+ fgets(start->nome,sizeof(start->nome),stdin);
+ start->nome[strlen(start->nome)-1] = '\0'; 
+ printf("digite valor valor\n");
+ scanf("%f",&start->valor);
+ start->proximo=start;
+}
+
+
+void InserirDepois(noh *start)
+{
+ int rno;                 
+ int flag=0;
+ noh *newnoh;            
+ noh *Atual;           
+ newnoh=ALOCAR(noh);
+ printf("digite numero da coluna\n");
+ scanf("%d",&rno);
+ entrada(newnoh);
+ Atual=start;
+    while(Atual->proximo!=start)
+    {
+        if(Atual->coluna==rno)
+        {
+            newnoh->proximo=Atual->proximo;
+            Atual->proximo->anterior=newnoh;
+            Atual->proximo=newnoh;
+            newnoh->anterior=Atual;
+            flag=1;
+        }
+        Atual=Atual->proximo;
+    }
+    if(flag==0 && Atual->proximo==start && Atual->coluna==rno)
+    {
+        newnoh->proximo=Atual->proximo;   
+        Atual->proximo->anterior=newnoh;
+        Atual->proximo=newnoh;
+        newnoh->anterior=Atual;
+        flag=1;
+    }
+    if(flag==0 && Atual->proximo==NULL)
+        printf("nao achado\n");
+}
+
+
+noh* InserirAntes(noh *start)
+{
+ int rno;                 
+ noh *newnoh;            
+ noh *Atual;            
+ newnoh=ALOCAR(noh);
+ printf("numero da coluna para inserir antes\n");
+ scanf("%d",&rno);
+ entrada(newnoh);
+ Atual=start;
+ if(Atual->coluna==rno)
+ {
+  newnoh->proximo=Atual;
+  Atual->anterior=newnoh;
+  while(Atual->proximo!=start)
+  Atual=Atual->proximo;
+  newnoh->anterior=Atual;
+  Atual->proximo=newnoh;
+  start=newnoh;
+  return(start);
+ }
+ while(Atual->proximo!=start)
+ {
+  if(Atual->proximo->coluna==rno)
+  {
+   newnoh->proximo=Atual->proximo;
+   Atual->proximo->anterior=newnoh;
+   Atual->proximo=newnoh;
+   newnoh->anterior=Atual;
+   return(start);
+  }
+  Atual=Atual->proximo;
+ }
+ printf("busca nao achada\n");
+ return(start);
+}
+
+noh* del(noh *start)
+{
+ int rno;                  
+ noh *delnoh;           
+ noh *Atual;            
+ printf("numero da coluna que você deseja deletar\n");
+ scanf("%d",&rno);
+ Atual=start;
+ if(Atual->coluna==rno)
+ {
+  delnoh=Atual;
+  while(Atual->proximo!=start)
+   Atual=Atual->proximo;
+  Atual->proximo=start->proximo;
+  start->proximo->anterior=Atual;
+  start=start->proximo;
+  free(delnoh);
+  return(start);
+ }
+ else
+ {
+  while(Atual->proximo->proximo!=start)
+  {
+   if(Atual->proximo->coluna==rno)
+   {
+    delnoh=Atual->proximo;
+    Atual->proximo=Atual->proximo->proximo;
+    Atual->proximo->anterior=Atual;
+    free(delnoh);
+    return(start);
+   }
+   Atual=Atual->proximo;
+  }
+  if(Atual->proximo->proximo==start && Atual->proximo->coluna==rno)
+  {
+   delnoh=Atual->proximo;
+   free(delnoh);
+   Atual->proximo=start;
+   return(start);
+  }
+ }
+    printf("nao foi achado\n");
+    return(start);
+}
+
+
+void search(noh *start)
+{
+ int ch;                
+ printf("\nescolha uma forma de busca digite um numero\n");
+ printf("\n1. pelo numero da coluna\n");
+ printf("\n2. pelo valor valor\n");
+ scanf("%d",&ch);
+ switch(ch)
+ {
+  case 1:
+   BuscaColuna(start);
+   break;
+
+  case 2:
+   BuscaValor(start);
+   break;
+
+   default:
+   BuscaColuna(start);
+ }
+}
+
+void BuscaColuna(noh *start)
+{
+ int rno;                  
+ noh *Atual;        
+ printf("digite numero da coluna para procurar\n");
+ scanf("%d",&rno);
+ Atual=start;
+  while(Atual->proximo!=start)
+  {
+   if(Atual->coluna==rno)
+    printf("\n%d\t%s\t%f\n",Atual->coluna,Atual->nome,Atual->valor);
+   Atual=Atual->proximo;
+  }
+  if(Atual->proximo==start && Atual->coluna==rno)
+ printf("\n%d\t%s\t%f\n",Atual->coluna,Atual->nome,Atual->valor);
+}
+
+void BuscaValor(noh *start)
+{
+ float valor;              
+ noh *Atual;            
+ printf("digite valor para procurar\n");
+ scanf("%f",&valor);
+ Atual=start;
+  while(Atual->proximo!=start)
+  {
+   if(Atual->valor==valor)
+    printf("\n%d\t%s\t%f\n",Atual->coluna,Atual->nome,Atual->valor);
+    Atual=Atual->proximo;
+   }
+   if(Atual->proximo==start && Atual->valor==valor)
+    printf("\n%d\t%s\t%f\n",Atual->coluna,Atual->nome,Atual->valor);
+}
+
+void mostrar(noh *start)
+{
+  noh *Atual;           
+  Atual=start;
+  if(!Atual->proximo) return;
+  while(Atual->proximo!=start)
+  {
+   printf("\n %d  %s  %f",Atual->coluna,Atual->nome,Atual->valor);
+   Atual=Atual->proximo;
+  }
+  printf("\n %d  %s  %f",Atual->coluna,Atual->nome,Atual->valor);
+}
+========================================== EOF
+
+Bom este exemplo e fica por ele mesmo sei que tem muito mais para falar de
+lista Circular, mas deixo isso para você pesquisar afinal somos fuçadores
+se ler o Livro do Tanembaum sobre Minix,Sistemas operacionais vai ver muito
+estes algoritmos de LIFO e Lista circular em escalonamento...
+
+
+<b>05-Usando ENUM,Unions e typedef</b>
+==================================
+
+"ENUM" 
+-------
+você pode ver em programas calendários, é uma constante de enumeração 
+do tipo "int"...
+
+exemplo prático
+========================================== Code
+#include "stdio.h"
+
+int main()
+{
+ enum Days{domingo,segunda,terça,quarta,quinta,sexta,Sabado};
+ Days TheDay;
+ int j = 0;
+
+ printf("digite o numero da semana (0 to 6)\n");
+ scanf("%d",&j);
+ TheDay = Days(j);
+
+ if(TheDay == domingo || TheDay == Sabado)
+  printf("fim de semana vamos beber breja !\n");
+ else
+  printf("trabalho\n");
+ return 0;
+}
+========================================== EOF
+
+
+"Union"
+------------
+uma união é uma variável que pode conter(em momentos diferentes) objetos
+de diferentes tipos e tamanhos,com compilador tomando conta dos requesitos de tamanho 
+de alinhamento.As uniões fornecem um meio de manipular diferentes tipos de dados
+em uma única área da memória,sem necessidade de qualquer informação dependente de 
+máquina no programa.
+
+exemplo:
+
+union etiqueta {
+ int x;
+ float z;
+ chat *y;
+}u;
+
+parece "struct" a forma de acessar
+
+u.x == nome-união.membro
+se fosse apontador usariamos "->" invés de "."
+
+as uniões podem ocorrer dentro de estruturas e vetores e vice-versa,por exemplo
+
+struct {
+ char *nome;
+ int sinalizadores;
+ int valor
+ union {
+  int codigo;
+  float area;
+  char *val;
+ }u;
+}tab[N]
+
+para referenciar o membro "codigo" do nosso union
+tab[cont].u.codigo
+
+outro exemplo
+========================================== Code
+struct owner {      char socsecurity[12]; 
+     ... 
+}; 
+struct leasecompany  { 
+     char name[40]; 
+     char headquarters[40]; 
+     ... 
+} 
+union data { 
+     struct owner owncar; 
+     struct leasecompany leasecar; 
+}; 
+========================================== EOF
+
+agora veja um exemplo meio Bizarro
+
+========================================== Code
+struct in_addr {
+	union {
+		struct { u_char s_b1,s_b2,s_b3,s_b4; } S_un_b;
+		struct { u_short s_w1,s_w2; } S_un_w;
+		u_long S_addr;
+	} S_un;
+#define s_addr  S_un.S_addr
+#define s_host  S_un.S_un_b.s_b2
+#define s_net   S_un.S_un_b.s_b1
+#define s_imp   S_un.S_un_w.s_w2
+#define s_impno S_un.S_un_b.s_b4
+#define s_lh    S_un.S_un_b.s_b3
+========================================== EOF
+
+Imagino que apartir desta explicação você já pode caminhar
+com os próprios pés... 
+
+
+"Typedef"
+-----------
+
+O comando typedef permite ao programador definir um novo nome para 
+um determinado tipo. Sua forma geral é:
+
+  typedef antigo_nome novo_nome; 
+
+Em declaracoes com typedef, nenhuma variavel eh criada. Em compensacao,
+criam-se novos identificadores que resumem outros tipos de variaveis.
+typedef eh apenas um recurso para criar novos nomes de tipo mais
+complexos apartir do que jah dispomos.
+
+Exemplo:
+
+typedef char caractere;
+
+verificaremos que
+
+caractere a, b[5];
+
+eh sinonimo de
+
+char a, b[5];
+
+Exemplo:
+
+typedef float racional;
+teremos que
+racional metade(racional x) {
+ return x/4;
+}
+
+e
+
+float metade(float x) {
+ return x/4;
+}
+são a mesma coisa.
+
+
+<b>06-Validação de dados com Regex e fazendo Parsers</b>
+====================================================
+
+Regex,ER ou simplesmente "expressão regular" é muito útil para validação de
+entradas ou mesmo para extração de informações em um arquivo.bom vamos usar
+a lib Posix Regex, chamada como "regex.h".ER é muito vista em editores de texto
+de Unix como VIM,SED e linguagens como Perl e AWK.Em fim você não precisa
+ficar apanhando de geradores léxicos ala flex+bison,quem já leu o dragon book
+sabe do que to falando...
+
+A utilização de ER pode facilitar muito a programação de parsers, validação 
+de dados, busca de textos. o comando "grep" permite usar regex,o comando
+"killall -r" ai presente em sistemas operacionais Unix Like permite regex
+em fim até naqueles formulários de comércio eletronico tem validação com
+uso de regex,Web Bots,spiders,crawlers e afins usam regex,scanners de 
+vulnerabilidades de Web usam regex e ai vai.
+
+para continuar caso você nunca tenha trabalhado com regex em outra linguagem
+ou mesmo ShellScript sugiro que veja a tabela explicativa... no fim deste capítulo
+
+Bom se você está preso em "ctype.h" e "string.h" para validar dados e extrair
+strings bom vamos mudar está idéia
+
+========================================== Code
+/*
+Programa exemplo de como usar Posix regex para validação simples
+Autor: Antonio "Cooler_"
+Contato: c00f3r@gmail.com , tony.unix@yahoo.com.br
+*/
+#include "sys/types.h"
+#include "regex.h"
+#include "stdio.h"
+#include "string.h"
+
+int main(int argc, char *argv[]){
+ regex_t regex;
+ int reti;
+ char msgbuf[100],exp[50],string[50];
+
+// Pegamos entradas do usuário
+  printf("digite uma string: ");
+  fgets(string, sizeof(string), stdin);
+  string[strlen(string)-1] = '\0';
+  printf("digite a condição da expressão regular para dizer se casou ou não com string: ");
+  fgets(exp, sizeof(exp), stdin);
+  exp[strlen(exp)-1] = '\0';
+
+// Compilamos a expresão regular
+  reti = regcomp(&regex, exp, 0);
+  if(reti) fprintf(stderr, "Could not compile regex\n");
+
+// Executa a expressão regular
+  reti = regexec(&regex, string, 0, NULL, 0);
+  if(!reti) puts("\n casou");
+  else if( reti == REG_NOMATCH ) puts("\n Não casou");
+  else regerror(reti, &regex, msgbuf, sizeof(msgbuf))&fprintf(stderr, "Regex falhou: %s\n", msgbuf);           
+  
+// Libera espaço onde estava expressão regular compilada
+  regfree(&regex);
+
+  return 0;
+}
+========================================== EOF
+este foi um exemplo apenas ai para uma futura validação quem sabe...
+
+alguns detalhes 
+Para compilar utiliza-se a função regcomp:
+
+  int regcomp(regex_t *preg, const char *regex, int cflags);
+
+'preg' é um ponteiro para um pattern buffer (regex_t). 'regex' é um ponteiro
+ para uma string que contém a expressão regular. 'cflags' e utilizamos para 
+ determinar o tipo de compilação. 
+
+'cflags' são: 
++--------------------------------------------------------------------------------+
+|REG_EXTENDED 	para usar a sintaxe de POSIX Extended Regular Expression,        |
+|                caso contrário é utilizado POSIX Basic Regular Expression.      |
+|------------------------------------------------------------------------------- |
+|REG_ICASE 	para ignorar maiúsculas e minúsculas (ignore case).              |
+|------------------------------------------------------------------------------- | 
+|REG_NOSUB 	os parâmetros nmatch e pmatch da função regexec são ignorados.   |
+|                Utilizado somente para saber se a ER casa ou não.               | 
+|------------------------------------------------------------------------------- | 
+|REG_NEWLINE 	mesmo que o input tenha várias linhas, serão tratadas como se    |
+|                fossem independentes. ex: '^s' e '^b$' com uma entrada '1\n1'   |
+|                casariam duas vezes. '1\n1' casaria uma.                        |
++--------------------------------------------------------------------------------+
+
+REPORTAGEM DE ERROS POSIX
+--------------------------
+   regerror  é  usado  para  transformar  os códigos de erro que podem ser
+retornados por regcomp e regexec para strings de mensagens de erro.
+
+regerror recebe o código de erro, errcode, o buffer  modelo,  preg,  um
+ponteiro para um buffer de string de caracteres, errbuf, e o tamanho do
+buffer de string, errbuf_size.  Retorna o tamanho de  errbuf  requerido
+para conter uma string de mensagem de erro terminada em nulo. Se errbuf
+e errbuf_size não são  zero,  errbuf  é  preenchido  com  os  primeiros
+errbuf_size - 1 caracteres da mensagem de erro e um nulo de terminação.
+
+agora outro exemplo dessa vez para fazer extração de um determinado dado
+através de uma certa paradigma.
+
+========================================== Code
+/*
+-------------------------------------------------------------
+
+Exemplo de como Extrair string apartir de um padrão de regex
+                 Usando "Posix Regex"
+
+-------------------------------------------------------------
+ Autor: Antonio "Cooler_"
+ Contato: tony.unix@yahoo.com.br
+ WebSite: BugSec.com.br 
+          BotecoUnix.com.br 
+          coolerlab.wordpress.com
+
+*/
+#include "stdio.h"
+#include "stdlib.h"
+#include "regex.h"
+
+char *regexp (char *string, char *patrn) {     
+ int i, w=0, len, begin, end;                  
+ char *word = NULL;
+ regex_t rgT;
+ regmatch_t match;
+// Compila a Expressão Regular
+ regcomp(&rgT,patrn,REG_EXTENDED);
+// execução da regex compilada na função "regexec"
+  if (!(regexec(&rgT,string,1,&match,0))) {
+   begin = (int)match.rm_so;
+   end = (int)match.rm_eo;
+   len = end-begin;
+   word=malloc(len+1); 
+   for (i=begin; i<end; i++,w++) word[w] = string[i]; 
+   word[w]=0;
+  }
+// Libera espaço na memoria que foi usada pela regex
+ regfree(&rgT); 
+ return word;
+}
+
+int main() {
+//esta exp [a-z]+[0-9] vou explicar
+ char *match=regexp("ola como vai2 ai onde você está","[a-z]+[0-9]");
+ printf("->%s<-\n",match);
+ return 0;
+}
+========================================== EOF
+
+Quanto a expressão vou passar a tabela para compreensão
++-----------------------------------------------------+
+|  POSIX    |  Similar      |  Significa              | 
++-----------------------------------------------------+ 
+| [:upper:]    [A-Z]          letras maiúsculas       |
+| [:lower:]    [a-z]          letras minúsculas       |
+| [:alpha:]    [A-Za-z]       maiúsculas e minúsculas |
+| [:alnum:]    [A-Za-z0-9]    letras e números        |
+| [:digit:]    [0-9]          números                 |
+| [:xdigit:]   [0-9A-Fa-f]    números hexadecimais    | 
+| [:punct:]    [.,!?:...]     caracteres de pontuação |
+| [:blank:]    [ \t]          espaço em branco e TAB  |
+| [:space:]    [ \t\n\r\f\v]  caracteres brancos      |
+| [:cntrl:]    -              caracteres de controle  |
+| [:graph:]    [^ \t\n\r\f\v] caracteres imprimíveis  |
+| [:print:]    [^\t\n\r\f\v]  imprimíveis e o espaço  |
++-----------------------------------------------------+
+que também
++-----------------------------------------+
+|exp     POSIX equivale      explicação   | 
++-----------------------------------------+
+| \d      [[:digit:]]         dígito      |
+| \D     [^[:digit:]]         não-dígito  |
+| \w      [[:alnum:]_]        palavra     |
+| \W     [^[:alnum:]_]        não-palavra |
+| \s      [[:space:]]         branco      |
+| \S     [^[:space:]]         não-branco  |
++-----------------------------------------+
+
+e tabela dos metacaracteres
++---------------------------------------------------------------+
+| metacaracter | nome            |   explicação                 |
++---------------------------------------------------------------+
+|     .          ponto             curinga de um caractere      |
+|      []        lista              dentro todos são normais,   |
+|                                   traço é intervalo ASCII,    |
+|                                   [:POSIX:] tem acentuação    |
+|     [^]        lista negada    sempre casa algo,[^[:POSIX:]]  |
+|      ?         opcional       guloso, 0 ou 1, pode ter ou não |      
+|       *         asterisco        guloso, 0 ou mais,           |
+|                                 repete em qualquer quantidade |
+|       +         mais           guloso, 1 ou mais,             |
+|                                repete em qualquer quantidade, |
+|                                pelo menos uma vez             |
+|     {,}         chaves         guloso, número exato, mínimo,  |
+|                                máximo, ou uma faixa numérica  |
+|      ^         circunflexo     casa o começo da linha,        |
+|                                especial no começo da ER       | 
+|      $         cifrão          casa o fim da linha,           |
+|                                especial no fim da ER          |
+|      \b        borda          limita uma palavra              |
+|                               (letras, números e sublinhado)  | 
+|       \        escape         escapa um meta, tira seu poder  |
+|                               escapa a si mesmo \\            | 
+|       |         ou            indica alternativas,            |
+|                                poder multiplicado pelo grupo  |
+|      ()        grupo          agrupa, é quantificável,        |
+|                               pode conter outros grupos       | 
+|      \1      retrovisor       usado com o grupo, máximo 9,    |
+|                              conta da esquerda para direita   | 
+|      .*      curinga          qualquer coisa, o tudo e o nada |
+|      ??      opcional         não-guloso, 0 ou 1,             |
+|                              casa o mínimo possível           |
+|      *?      asterisco       não-guloso, 0 ou mais,           |
+|                              casa o mínimo possível           |
+|      +?      mais            não-guloso, 1 ou mais,           |
+|                              casa o mínimo possível           |
+|     {}?   chaves             não-guloso, numérico,            |
+|                              casa o mínimo possível|          |
++---------------------------------------------------------------+
+trabalhar com ER você só aprende na prática
+
+Dica sugiro você praticar com comando "grep" se você usa sistema Unix like
+exemplo temos a lista:
+$ cat herois.txt
+
+batman
+homem aranha
+didi
+lanterna verde
+flash
+chaves
+homem gelo
+wolverine
+magneto
+mussun
+homem de ferro
+hulk
+zacarias
+mulher maravilha
+chapolin
+dedé
+senhor madruga
+
+Então você quer que mostre só o que tem a letra "h" de inicio então
+
+$ grep -E '^h' herois.txt
+
+A devera ser saída
+ homem aranha
+ homem gelo
+ homem de ferro
+ hulk
+
+Regex tem um poder muito mais forte do que estes exemplos bobos que passei
+quer mais ? então "man regex" e "man grep".
+
+
+<b>07-Trabalhando com DB usando DBI e SQLite3</b> 
+=================================================
+Escrevi sobre struturas,alocação de memória algoritmos diversos com dados
+em geral e parsers,se eu não falar de Banco de dados "BD" vão acabar me 
+matando.Vamos uma introdução direta...
+
+Em C quando falamos de banco de dados temos algumas opções
+
+<b>*DBM ,Oracle berkeley DB</b>
+Um banco que guarda dados em Hash tables "chave - valor"
+se não me engano OpenLDAP usa este sistema para deixar as contas
+dos usuários. a Oracle comprou este sistema ja tem um tempo antes
+era da sandcat... 
+
+não é muito difícil entender o funcionamento do mesmo mais devido a obscuridade
+do mesmo perante artigos e popularidade complica
+http://sewm.pku.edu.cn/src/paradise/thirdparty/installed/docs/gsg/C/BerkeleyDB-Core-C-GSG.pdf
+
+<b>*Banco de dados Relacionais</b>
+Em PHP temos PDO modulo que nos permite usar a mesma estrutura de código para vários
+SGBDs só mudando umas 4 linhas, assim como Perl tem DBI,Java tem Hibernate...
+Bom maioria dos programadores em C usa uma Header para cada SGBD ou seja um ritual
+para cada SGBD, se for migrar de SGBD isso causa uma dor de cabeça gigante,bom para
+tal solução temos ai "LibDBI",seguindo a lógica mais o menos do modulo "DBI" do Perl
+alias Perl deve ter tido influencias da libDBI para tal...
+
+<b>http://libdbi.sourceforge.net/</b>
+
+sem mais vou dar um Exemplo
+
+========================================== Code
+/*
+Exemplo de como usar LibDBI
+
+para instalar no meu Debian Linux dei o comando...
+ aptitude install libdbi0 libdbi0-dev libdbi-doc
+
+caso use *BSD ou MacOS procure nos ports ;)
+
+para compilar
+ gcc -o code code.c -ldbi
+
+-------------------------------------
+autor: Antonio, vulgo "Cooler_"
+e-mail: tony.unix@yahoo.com.br
+        c00f3r@gmail.com
+sites: BotecoUnix.com.br
+       BugSec.com.br
+
+thanks BugSec Team 
+      .  .-+  ._/V\
+     / \/   \/    /__
+    )                "-+._
+   ."                      \
+  (       B R A S I L       )
+   \                      /
+     \__                 (
+        >_               )
+          \_.           /
+             < S.Paulo /-------> Cooler's Lab
+              \   *  _/
+               >    º
+              /    /
+             <    /
+              "^./
+                   
+tabela usada
+CREATE TABLE user (
+ id int NOT NULL auto_increment,
+ login varchar(30),
+ pass varchar(32),
+ created_at TIMESTAMP,
+ updated_at TIMESTAMP,
+ PRIMARY KEY(id,login)
+);
+
+*/
+#include "stdio.h"
+#include "string.h"
+#include "dbi/dbi.h"
+//macro para pegar entrada de strings, baseada na função chomp do m0nad
+#define ReadString(a) fgets(a,sizeof(a),stdin),a[strlen(a)-1] = '\0'; 
+
+int main() {
+  dbi_conn conn;
+  dbi_result result;
+  const char *user;
+  const char *pass;
+  unsigned int numeroid;
+  int id;
+  char login[20],senha[20];
+
+// iniciamos a conexão no SGBD
+  dbi_initialize(NULL);
+//tipo do driver do SGBD vamos usar mysql
+  conn = dbi_conn_new("mysql");
+  dbi_conn_set_option(conn, "host", "localhost");
+  dbi_conn_set_option(conn, "username", "seu_login");
+  dbi_conn_set_option(conn, "password", "sua_senha_aqui");
+  dbi_conn_set_option(conn, "dbname", "wincase");
+  dbi_conn_set_option(conn, "encoding", "user");
+//teste simples para testar a conexão
+  if (dbi_conn_connect(conn)) 
+   printf("Por favor veja a conexão se está correta\n");
+//se a conexão tiver correta segue o programa
+  else 
+  {
+
+//verificando versão do driver
+  const char *dbi_version(void);
+  printf("\nversão da header %s\n",dbi_version());
+
+//usamos fução da libdbi que executa comando SQL
+      result = dbi_conn_queryf(conn, "SELECT * FROM user");
+      if(result) 
+      {
+//mostramos as tuplas do resultado
+        while (dbi_result_next_row(result)) 
+        {
+       //repare a função para extrair como string
+         user = dbi_result_get_string(result, "login");
+         pass = dbi_result_get_string(result, "pass");
+       //usamos para extrair "uint" que seria função para extrair int
+         numeroid = dbi_result_get_uint(result, "id");
+    /*
+       Tem outras funções como exemplo
+       dbi_result_get_float,time_t dbi_result_get_datetime,dbi_result_get_double,
+       dbi_result_get_binary,dbi_result_get_char...
+    */
+         printf("user: %s , pass:  %s  ,ID: %i\n", user, pass, numeroid);
+        }
+//limpamos a busca
+        dbi_result_free(result);
+      }
+
+      printf("\nDigite o numero do ID a procurar?\n");
+      scanf("%d",&id),getchar();           
+      result = dbi_conn_queryf(conn, "SELECT * FROM user WHERE ID = %d",id);
+      if(result) 
+      {
+        while (dbi_result_next_row(result)) 
+        {
+         user = dbi_result_get_string(result, "login");
+         pass = dbi_result_get_string(result, "pass");
+         numeroid = dbi_result_get_uint(result, "id");
+         printf("user: %s , pass:  %s  ,ID: %i\n", user, pass, numeroid);
+        }
+        dbi_result_free(result);
+      }
+
+      printf("\nDigite o nome do User a adicionar?\n");
+      ReadString(login);
+      printf("\nDigite a senha do User a adicionar?\n");
+      ReadString(senha);         
+//exemplo comando SQL Insert   
+      result = dbi_conn_queryf(conn, "INSERT INTO user (login,pass) VALUES('%s','%s')",login,senha);
+      if(!result) 
+       printf("erro no comando de inserir\n");
+      dbi_result_free(result);
+
+// desconecta a conexão
+      dbi_conn_close(conn);
+  }
+// para limpar a memória usada pelos drivers do DBI                                                 
+  dbi_shutdown();
+  return 0;
+}
+
+========================================== EOF
+Bom este exemplo serviu apenas para ilustrar o Uso da "Lib"
+
+agora vamos mostrar o uso do SQLite.
+
+Por que ?
+Por ser o SGBD mais leve de todos, fora que usar o driver dele
+vai ilustrar como seria um uso de uma "Header" Própria de um SGBD
+
+========================================== Code
+/*
+*Function this programm
+this program is a "address book" with SQLite 
+
+*requeriments
+sqlite3-dev and db with table
+CREATE TABLE agenda (
+nome varchar(30),
+tell int(12) );
+db name "agenda.sqlite3"
+
+*tested with GCC but wheel in others compilers...
+ i wheel on Unix/Linux/*BSD this: 
+    gcc -o program program.c -l sqlite3; ./program     
+
+Author: Antonio "Cooler_x86" 
+contact: tony.unix@yahoo.com.br
+license: BSD
+
+visit this site: http://BotecoUnix.com.br
+Real Geeks BotecoUnix
+
+greetz 
+Thanks _mlk_ , m0nad,IAK,Fox,D3lf0,nibbles and Chris Torek. 
+K&R for book ansi C and Expert C programming from Peter Van.
+
+      .--..--..--..--..--..--.
+    .' \  (`._   (_)     _   \
+  .'    |  '._)         (_)  |
+  \ _.')\      .----..---.   /
+  |(_.'  |    /    .-\-.  \  |
+  \     0|    |   ( O| O) | o|
+   |  _  |  .--.____.'._.-.  |
+   \ (_) | o         -` .-`  |
+    |    \   |`-._ _ _ _ _\ /
+    \    |   |  `. |_||_|   |     Solution!
+    | o  |    \_      \     |     -.   .-.
+    |.-.  \     `--..-'   O |     `.`-' .'
+  _.'  .' |     `-.-'      /-.__   ' .-'
+.' `-.` '.|='=.='=.='=.='=|._/_ `-'.'
+`-._  `.  |________/\_____|    `-.'
+   .'   ).| '=' '='\/ '=' |
+   `._.`  '---------------'
+           //___\   //___\
+             ||       ||
+             ||_.-.   ||_.-.
+            (_.--__) (_.--__)
+
+*/
+#include "stdio.h"
+#include "string.h"
+#include "sqlite3.h"
+#include "errno.h"
+#include "stdlib.h"
+
+char opcao_menu() {
+ int i;
+ char *banner[] = {
+  "------------------------------",
+  "Address book with SQLite",
+  "coded by Cooler_x0a",
+  "(1)List",
+  "(2)Add ",
+  "(3)Remove",
+  "(0)Fim",
+  "------------> ",
+ };
+ for(i=0; i<=7; i++) printf("%s\x0a",banner[i]);
+}
+
+int select_all(void * ptr, int resultados, char ** STR1, char **STR2) {
+ int i;
+ for(i = 0; STR1[i] != NULL; i++) printf("%s = %s\x0a", STR2[i], STR1[i]);
+ return 0;
+}
+
+void delete(sqlite3 *obj_conexao) {
+ int status;
+ char * errplace;
+ char nome[20];
+ printf("digite um nome: ");
+  fgets(nome, sizeof(nome), stdin);
+  nome[strlen(nome)-1] = '\0';
+ printf("adicionou %s\x0a",nome);
+ char sql[60]="DELETE FROM agenda WHERE nome='";
+  strcat(sql,nome); strcat(sql,"'");
+ printf("%s\x0a",sql);
+ status = sqlite3_exec(obj_conexao, sql, NULL, NULL, &errplace);
+ if (status != SQLITE_OK) {
+  printf("Ocorreu um erro ao executar a consulta \" %s \"\x0a", sql);
+  printf("Erro: \x0a\x09 %s\x0a", errplace);
+ }
+}
+
+void insert(sqlite3 *obj_conexao) {
+ int status;
+ char * errplace;
+ char nome[20],tell[20];
+ printf("digite um nome: ");
+  fgets(nome, sizeof(nome), stdin);
+  nome[strlen(nome)-1] = '\0';
+ printf("digite o telefone: ");
+  fgets(tell, sizeof(tell), stdin);
+  tell[strlen(tell)-1] = '\0';
+ printf("adicionou %s e %s\x0a", tell,nome);
+ char sql[60]="INSERT INTO agenda VALUES('";
+  strcat(sql,nome); strcat(sql,"','");
+  strcat(sql,tell); strcat(sql,"')");
+ printf("%s\x0a",sql);
+ status = sqlite3_exec(obj_conexao, sql, NULL, NULL, &errplace);
+ if (status != SQLITE_OK) {
+  printf("Ocorreu um erro ao executar a consulta \" %s \"\x0a", sql);
+  printf("Erro: \x0a\x09 %s\x0a", errplace);
+ }
+}
+
+// call the functions
+int main(int args, char * arg[]) {
+ int op=0;  
+ const char *arquivo = "agenda.sqlite3";
+ sqlite3 *obj_conexao;
+ int status = sqlite3_open_v2(arquivo, &obj_conexao, SQLITE_OPEN_READWRITE, NULL); 
+
+ if (status != SQLITE_OK) { 
+  printf("Erro ao abrir conexão com banco: \x0a\x09%s\x0a", sqlite3_errmsg(obj_conexao));
+  return 1;
+ }
+
+ while (op!=0) {
+   opcao_menu();
+   scanf("%d",&op); getchar();
+
+   if(op==1) {
+    const char * SQL_STATEMENT = "select * from agenda order by nome";
+    char * errplace;
+    status = sqlite3_exec(obj_conexao, SQL_STATEMENT, select_all, NULL, &errplace);
+    if (status != SQLITE_OK) {
+     printf("Ocorreu um erro ao executar a consulta \" %s \"\x0a", SQL_STATEMENT);
+     printf("Erro: \x0a\x09 %s\x0a", errplace);
+    } else { puts("Comando executado."); }
+   }
+   if(op==2) insert(obj_conexao);
+   if(op==3) delete(obj_conexao);
+ }
+ status = sqlite3_close(obj_conexao);
+ return 0;
+}
+========================================== EOF
+
+Bom fico por aqui...
+um código vale mais que mil palavras! 
+
+Bom se você não entendeu nada desse capítulo 
+sugiro você ler o Cow BOOK de DB
+<b>Database Management Systems (Third Edition) BY RAGHU RAMAKRISHNAN</b>
+neste livro tu aprende desde Design e diagramas até comandos SQL
+em fim livro é bem completo...
+
+
+
+<b>08-Bibliografia</b>
+===================
+Sistemas Operacionais segunda edição - Andrew S. Tanenbaum
+C: a Linguagem de Programação Padrão Ansi - BRIAN W. KERNIGHAN & DENNIS M. RITCHIE 
+C Primer Plus, Third Edition - Stephen Prata 
+Practical C Programming, Third Edition - Steve Oualline
+
+
+<b>09-Agradecimentos</b>
+=====================
+----> Pessoal do "BugSec" grupo que faço parte!
+	      ,,                ,,
+	    (((((             )))))
+	   ((((((             ))))))
+	   ((((((   Overflow  ))))))
+	    (((((,e@@@@@@@@@@e,)))))
+	     (((@@@@@@@@@@@@@@@@)))
+	      \@@/,:::,\/,:::,\@@/
+	     /@@@|:::::||:::::|@@@\
+	    / @@@\':::'/\':::'/@@@ \
+	   /  /@@@@@@@//\\@@@@@@@\  \
+	  (  /  '@@@@@@@@@@@@@@'  \  )
+	   \(     /          \     )/
+	     \   (            )   / ('-.)' [Ruby](`'.) '
+	          \          /    ('-.)' (`'.)[ASM] '('-.)' 
+            . '  .            ('-.)' (`'.) '('-.)' (`'.) '
+               ' .( '.) '[Flex+bison]('-.)' (`'.) '('-.)' (`'.) '
+       _     ('-.)' (`'.) '('-.)' (`'.) '('-.)'[Emacs] (`'.) (`'.) ''
+      |0|=======- -(. ')`[VIM]( .-`)(`'.) ',(-')'('-.)' (`'.) (`'.) '
+   .--`+'--.  .  (' -,).(') .('-.)' (`'.) '('-.)' (`'.)(`'.) [Python]' '
+   |`-----'|   (' .) - ('. )[Perl]('-.)' (`'.) '('-.)' (`'.) '(`'.) '
+   |       |    . ('[PHP] `.  )('-.)' (`'.)[REGEX] '('-.)' (`'.) '
+   |  ===  |       ` .  `('-.)'[C/C++] (`'.) ('-.)' (`'.) ''
+   |BugSec |          ('-.)' (`'.) '('-.)[AWK]' (`'.) '
+   |  ---  |
+   |       |                Art by Cooler_
+   |  GDB  |
+   |       |
+   `-.___.-'
+<FONT FACE="Verdana" COLOR="#00C7C2">
+Brothers do BugSec _Mlk_,I4K e m0nad. por tudo e por serem meus amigos!
+</FONT>
+----> Diversos
+voidpointer ,syn_ack, edenc ,Ephexis, ecl , isis, Cs0, muzgo , zepplin , nibbles,  
+nash coracaodeleao,6_Bl4ck9_f0x6 , d3lf0 ,f0kerDebug,Joey, Otacon_x86 , BackBone
+e deadside.
+
+pessoal do BotecoUnix.com.br e compania
+pessoal dos canais #c4ll,#c-br,#openbsd-br,#php-br,#asm,#gentoo-br da freenode
+
+
+
+"Um sonho sonhado sozinho é um sonho. Um sonho sonhado junto é realidade."
+Raul Seixas , Por isso somos BugSec e BotecoUnix :)
+
+
+
+</div>
+ <img src="vim-powered.png"> <img src="hacker.png"> 
+ 
+</pre>
+</body>
+</whatever tag j'ai oublié d'fermer>
+</html>
