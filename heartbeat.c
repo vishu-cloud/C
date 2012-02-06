@@ -3,7 +3,7 @@ contato: c00f3r@gmail.com
 autor: Antonio Costa aka Cooler_
 coolerlab.wordpress.com
 
-Simple Heartbeat detector with arduino
+Simple  Heartbeat detector with arduino
 
  */
 #include <stdio.h>    
