@@ -23,7 +23,7 @@ c00f3r@gmail.com
 
 exemplo com tomcat
 
-apt-get install libcurl-dev
+apt-get install  libcurl-dev
 gcc -o code code.c -lcurl                                          
 ./fairy http://tomcat/manager/html Manager lista.txt admin
                                        |     |           |_login
