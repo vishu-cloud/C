@@ -71,7 +71,7 @@ int main(int argc, char **argv) {
     curl_easy_setopt(curl_handle, CURLOPT_POST, 1);
     curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, msg);
   //definimos campos de login e senha
-    curl_easy_setopt(curl_handle, CURLOPT_USERPWD, "Cooler_freenode:saibot1");
+    curl_easy_setopt(curl_handle, CURLOPT_USERPWD, "Cooler_freenode:1234");
   //envia dados
     curl_easy_perform(curl_handle);
   //limpa tudo
