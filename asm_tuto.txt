@@ -1,0 +1,374 @@
+Anos que digo para mim que vou escrever algo de "Assembly" vai ano e passa, acabo deixando
+de lado, já algum tempo ando estudando fazendo coisas simples bem devagar, isso tem me ajudado a depurar meus programas em linguagem C, claro que também me ajuda nos skills de hacking seja com engenharia reversa ou para entender problemas que tenham  overflow, programar para um microcontrolador etc...
+
+Se assembly fosse banda seria uma banda de heavy metal... rsrs
+    Se assembly fosse banda seria uma banda de heavy metal... rsrs
+
+Antes de começar queria agradecer de coração "sigsegv","m0nad","iak","kov","__i","MySoft","muzgo"
+por terem me influenciado em Assembly e ter me ajudado por muitas vezes e até hoje...
+irc.freenode.net nos canais #asm,#c-br,#lisp-br,#cogubin.
+
+"antes que me esqueça feliz pascoa caros leitores desse blog..."
+
+Em "Assembly" tem duas sintaxes "AT&T" e o "Intel" a pouco
+tempo só usava "Intel", mas como minha intenção é só usar
+assembly dentro da "linguagem C" tive problemas com sintaxe
+intel, mesmo convertendo etc bugs bizarros com input, então
+nunca gostei do "nasm" também,parti para o GAS e só estou
+usando "AT&T" agora. Nos muitos livros que li só tinha
+introdução básica, e sempre estava como linguagem de montagem
+e não como "Assembly" , não acho legal traduzir isso , o
+que anda me ajudando mesmo é ler o "programming from the ground up"
+do Jonathan Bartlett.
+
+Galera tem muito medo de "Assembly", eu achava que só os
+JEDI SITH podiam codar em "Assembly", hoje eu acho fácil
+claro que se eu tiver com uma tabela dos registradores e dos
+"JMP" etc...
+
+Um registrador em Assembly é uma área de memoria
+que referência um determinado circuito do processador.
+olhe estas tabelas , caso queira
+codar com shellcodes leiam paper do meu amigo m0nad do cogumelo binario
+
+Algo para ajudar um texto do meu amigo IAK http://code.google.com/p/bugsec/wiki/AssemblyArqComp
+
+bom tabelas dos registradores,syscalls,aritmética,jmp,access types
+vou passando no decorrer do "post", não é minha ideia ensinar
+"Assembly" mesmo porque sou noob, ideia é mostrar como usar em
+"linguagem C".
+
+vamos la... para tirar a ferrugem um "ola"
+
+[sourcecode language="c"]
+# exemplo chamando exit() e write()
+ .section .data
+ output:
+ .ascii "Ola.\n"
+ output_end:
+ .equ len, output_end - output
+ .section .text
+ .globl _start
+ _start:
+# mov com "l" significa que vamos usar 32bit vide tabela
+# eax deixamos o número do syscall que seria 4
+ movl $4, %eax
+# $ cat unistd_32.h | grep write
+# define __NR_write 4  <-- num do syscall
+# número do descriptor 1 para out no primeiro argumento
+ movl $1, %ebx
+# nossa string no segundo argumento
+ movl $output, %ecx
+# tamanho da string no terceiro argumento
+ movl $len, %edx
+# executa  write(1,string,len);
+ int $0x80
+# exit()
+ movl $1, %eax
+# exit(0);
+ movl $0, %ebx
+# executa o exit() fecha...
+ int $0x80
+[/sourcecode]
+
+compilamos,linkamos e executamos
+
+$ as code.s -o code.o
+$ ld code.o -o code
+$ ./code
+ola.
+$
+
+OK , para entender a ordem dos registradores na hora de passar
+argumentos para um syscall, vejamos se esta tabela pode ajudar
+
+Ao passar argumento para um syscall
+
+[sourcecode language="c"]
+ EBX primeiro parametro
+ ECX segundo parametro
+ EDX terceiro parametro
+ ESI quarto parametro
+ EDI quinto parametro
+[/sourcecode]
+
+se você não entendeu o "movl"
+Aritmética básica
+
+[sourcecode language="c"]
+ Adição: ADD, ADC, INC, XADD, AAA e DAA;
+ Subtracção: SUB, SBB, DEC, AAS e DAS;
+ Multiplicação: MUL, IMUL e AAM;
+ Divisão: DIV, IDIV e AAD.
+ Atribuição: MOV
+[/sourcecode]
+
+por que ? "l"
+
+[sourcecode language="c"]
+    b = byte (8 bit)
+    s = short (16 bit integer) or single (32-bit floating point)
+    w = word (16 bit)
+    l = long (32 bit integer or 64-bit floating point)
+    q = quad (64 bit)
+    t = ten bytes (80-bit floating point)
+[/sourcecode]
+
+OK agora sabemos aritmética básica vamos fazer uma
+função em Assembly que calcula o cubo de um número,
+para assim poder usar na linguagem C
+
+$ vim cubo.s
+
+[sourcecode language="c"]
+# função calcula cubo(int x), retorna result int...
+# gcc -o code code.c cubo.s
+.type cubo, @function
+.globl cubo
+
+cubo:
+# pegamos o extended base pointer para pegar argumentos
+ pushl %ebp
+# movemos extented stack pointer para %ebp
+ movl %esp, %ebp
+# passamos primeiro argumento da função para %eax
+ movl 8(%ebp), %eax
+# multiplicamos eax por eax
+ imull %eax, %eax
+# passamos o primeiro argumento para %edx
+ movl 8(%ebp), %edx
+#multiplicamos por eax
+ imull %edx , %eax
+# damos return no resultado
+ movl %ebp, %esp
+ popl %ebp
+ ret
+[/sourcecode]
+
+vamos la então
+$ vim test.c
+
+[sourcecode language="c"]
+#include <stdio.h>
+
+int main()
+{
+ printf("%d \n",cubo(6));
+ return 0;
+}
+[/sourcecode]
+
+compilamos e executamos
+$ gcc -o test test.c test.s
+$ ./test
+216
+$
+
+tudo OK !
+agora como usar assembly dentro do nosso código
+vamos ver como fazer nosso Inline Assembly
+
+[sourcecode language="c"]
+/*
+ * agradeço ao amigo __i  da freenode do ##C-br
+   por ter me ajudado neste exemplo...
+*/
+#include <stdio.h>
+
+int
+add(int x, int y)
+{
+ int a = 0;
+// poderia ser asm() ou __asm__() ...
+ __asm__(
+// primeiro argumento para edx
+  "movl 8(%ebp), %edx\n"
+// segundo argumento para eax
+  "movl 12(%ebp), %eax\n"
+// soma os dois e fica em eax
+  "addl %edx, %eax\n"
+// movemos para var "a",
+// se tive-se segunda var como "b" fariamos -8(%ebp)
+  "mov %eax, -4(%ebp)\n"
+ );
+ return a;
+}
+
+int
+main(void)
+{
+ printf("%d\n", add(3,2));
+ return 0;
+}
+[/sourcecode]
+
+$ gcc -m32 -o code code.c; ./code
+5
+$
+usamos argumento -m32 para usar 32bit
+seguindo esse exemplo eu fiz uma calculadora simples
+
+Agora um exemplo de Extended Assembly , vamos fazer
+uma simples condição.
+$ vim test.c
+
+[sourcecode language="c"]
+#include <stdio.h>
+
+int main()
+{
+ int a = 3;
+ int b = 51;
+ int result;
+// jle jump if less
+ asm(
+// compara "a" e "b"
+    "cmp %1, %2\n\t"
+// se for menor pula para o label LESS
+    "jl LESS\n\t"
+// result recebe "a"
+    "movl %1, %0\n\t"
+// pula para o fim
+    "jmp end\n"
+    "LESS:\n\t"
+// result recebe "b"
+    "movl %2, %0\n"
+    "end:"
+// passamos os input
+     :"=r"(result)
+     :"r"(a), "r"(b)
+ );
+ printf("valor menor é %d\n", result);
+ return 0;
+}
+[/sourcecode]
+
+$ gcc -m32 -o code code.c; ./code
+valor menor é 3
+$
+
+não gosto de usar extended vou deixar uma url
+para quem quiser se aprofundar AQUI
+
+Assim eu fiz uma tabela humilde com alguns JMP
+
+[sourcecode language="c"]
++-------------------+----------------------------+-------------------------------+
+|    ASSEMBLY       |      inglês                 |      tradução                |
++-------------------+----------------------------+-------------------------------+
+| ja / jnbe <label> | Above / Not below or equal  | acima/não abaixo ou igual    |
++-------------------+----------------------------+-------------------------------+
+| jae / jnb <label> | Above or equal / Not below  | acima ou igual / não menor   |
++-------------------+------------------------------------------------------------+
+| jb / jnae <label> | Below / Not above or equal  | abaixo / não acima ou igual  |
++-------------------+------------------------------------------------------------+
+| jc <label>        | Carry                       |  carrega                     |
++-------------------+------------------------------------------------------------+
+| je/jz <label>     | Equal / Zero                | igual / zero                 |
++-------------------+------------------------------------------------------------+
+| jnc <label>       | Not Carry                   | não carrega                  |
++-------------------+------------------------------------------------------------+
+| jne/jnz <label>   | Not Equal / Not Zero        | não igual / não zero         |
++--------------------------------------------------------------------------------+
+| jg / jnle <label> | Greater / Not Less or Equal | maior / não menor ou igual   |
++--------------------------------------------------------------------------------+
+| jge / jnl <label> | Greater or Equal / Not Less | maior ou igual / não menor   |
++--------------------------------------------------------------------------------+
+| jl / jnge <label> | Less / Not Greater or Equal | menor / não maior ou igual   |
++--------------------------------------------------------------------------------+
+| jle / jng <label> | Less or Equal / Not Greater | menor ou igual / não maior   |
++--------------------------------------------------------------------------------+
+| jno <label>       | Not overflow
++----------------------------------------------------------------------------+
+| jns <label>       | Not sign (non-negative)
++----------------------------------------------------------------------------+
+| jo <label>        | Overflow
++----------------------------------------------------------------------------+
+| js <label>        | Sign (negative)
++-------------------+--------------------------------------------------------+
+[/sourcecode]
+
+vamos agora um exemplo mais ZEN, vamos fazer uma
+função em C com inline ASM para escrever em um arquivo.
+
+Antes de codar vamos olhar tabela de access type
+
+[sourcecode language="c"]
+O_RDONLY    00 - Open the file for read-only access.
+O_WRONLY    01 - Open the file for write-only access.
+O_RDWR      02 - Open the file for both read and write access.
+O_CREAT     0100 - Create the file if it does not exist.
+O_EXCL      0200 - When used with O_CREAT, if the file exists, do not open it.
+O_TRUNC     01000 If the file exists and is open in write mode, truncate it to a
+                  length of zero.
+O_APPEND    02000 - Append data to the end of the file.
+O_NONBLOCK  04000 - Open the file in nonblocking mode.
+O_SYNC      010000 - Open the file in synchronous mode (allow only one write
+             at a time).
+O_ASYNC     020000 - Open the file in asynchronous mode (allow multiple
+              writes at a time).
+[/sourcecode]
+
+então vamos usar
+1001 == O_WRONLY | O_CREAT
+
+$ vim writefile.c
+
+[sourcecode language="c"]
+#include <stdio.h>
+
+void
+writefile(char *filename,char *msg,int msglen)
+{
+ __asm__(
+// syscall open("string", O_CREAT | O_WRONLY, 0644);
+   "movl $0x05, %eax\n"
+// nosso primeiro argumento
+   "movl 8(%ebp), %ebx\n"
+// O_CREAT | O_WRONLY
+   "movl $1001, %ecx\n"
+// aqui você já sabe permissões em octal do unix
+   "movl $0644, %edx\n"
+   "int $0x80\n"
+// fd esta em %eax do open(), movemos para o %ebx para o write()
+   "movl %eax, %ebx\n"
+// syscall write(fd, message, messageLen);
+   "movl $0x04, %eax\n"
+// fd em  %ebx para acima
+// segundo argumento
+   "movl 12(%ebp), %ecx\n"
+// 12+4 terceiro argumento nosso
+   "movl 16(%ebp), %edx\n"
+   "int $0x80\n"
+// syscall close(fd);
+   "movl $0x06, %eax\n"
+// fd still in %ebx
+   "int $0x80\n"
+ );
+}
+
+int main()
+{
+ writefile("ola3.txt","lol",3);
+ return 0;
+}
+[/sourcecode]
+
+$ gcc -o writefile writefile.c; ./writefile; cat ola.txt
+lol
+$
+
+OK foi como esperado
+
+Bom caros leitores, tem muito mais o que estudar com Inline Assembly,
+espero que fiquem com um bloco do chocolate para quem sabe um dia
+conseguir comer o chocolate todo. é com exemplos simples que se consegue
+dar passos mais largos. ;-)
+
+sugiro que leiam este post antigo de kernel,syscall...
+
+algumas referências:
+http://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html
+http://asm.sourceforge.net/articles/rmiyagi-inline-asm.txt
+
+aloha o/
