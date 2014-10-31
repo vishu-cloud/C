@@ -35,7 +35,7 @@ int
 main()
 {
  FILE *fp;
- char buffer[PATH_MAX],tmp[(PATH_MAX<<1)+2];
+ char buffer[PATH_MAX+1],tmp[(PATH_MAX<<1)+3];
 
  puts("Simple nmap Bot :: by Cooler_");
 
