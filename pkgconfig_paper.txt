@@ -1,0 +1,61 @@
+ Bom dia Boa noite galera,tempinho ai que não mando algo paro blog,
+ mais aqui está um assunto interessante que muitos iniciantes ficam
+ perdidos em linguagem C, nada muito difícil algo bem sútil para 
+ aprendizado.
+
+ Para instalar uma "<strong>API</strong>" para desenvolvimento em sistemas unix
+ á várias formas em <strong>Ruby </strong>por exemplo se usa gems,em <strong>Perl</strong> temos
+ o CPAN, <strong>Common Lisp</strong> temos asdf. <strong>E em C</strong> ? isso varia de distro
+ para distro pode-se usar apt-get,yum,pacman e os *BSD  o ports
+ de acordo com o Sistema Operacional, entretanto todos tem o nome 
+ do pacote semelhante na maioria das vezes podendo ter alguma 
+ otimização ou versão mais atual dependendo se é current ,stable
+ em fim, por exemplo de pkg(pacote) vamos sitar uma API bem popular
+ a biblioteca do Curl ou seja <strong>libCurl</strong>, para poder usar temos que 
+ instalar, podemos baixar o tarball extrair dar config,make,make install
+ ou podemos buscar nos repositórios exemplo se procurarmos "<strong>libcurl</strong>" 
+ não vamos encontrar um nome exato , você vai ver muitos tipos de 
+ pacotes exemplo "libcurl-dev" que o "<strong>dev</strong>" significa development é 
+ um pkg para desenvolvedor.
+
+ Outro argumento no  final do pacote  é  o "<strong>doc</strong>" que  significa 
+ que é para documentação você vai poder usar o "<strong>man libcurl</strong>" por 
+ exemplo,"<strong>dbg</strong>" pkg vem compilado com símbolos para depuração.
+
+ Algo bem interessante quando falamos de desenvolvimento em C
+ é saber onde está as APIs do sistema e detalhes claro que você 
+ pode simplesmente abrir "<strong>/usr/include</strong>" e ver as headers a olho 
+ nu ,  mais uma  forma   mais  nobre  de  se  informar é usar o 
+ "<strong>pkg-config</strong>", exemplo
+
+[sourcecode language="c"]
+ $ pkg-config --list-all
+[/sourcecode]
+ uma lista das API instaladas irá surgir logo a frente informação
+ sobre as funções da mesma.
+
+ se quisermos saber se a <strong>libcurl</strong> foi instalada
+[sourcecode language="c"]
+ $ pkg-config --list-all | grep curl 
+[/sourcecode]
+ ver versão da header
+[sourcecode language="c"]
+ $ pkg-config --print-provides libcurl 
+[/sourcecode]
+ ver o último log da <strong>libcurl</strong> para depuração,algumas pkg pedem "*-<strong>dbg</strong>"
+ no caso da libcurl não pede...
+[sourcecode language="c"]
+ $ pkg-config --debug libcurl | tail
+[/sourcecode]
+ exemplo referenciando as libs do <strong>GTK</strong> caso queira fazer uma aplicação
+ usando gtk,para não ter que escrever lib por lib com argumento "-l"
+[sourcecode language="c"]
+ $ gcc -o code code.c `pkg-config --cflags --libs gtk+-2.0` 
+[/sourcecode]
+ apenas mostrando a referencias das bibliotecas
+[sourcecode language="c"]
+ $ pkg-config --cflags gtk+-2.0
+[/sourcecode]
+ mais informações "<strong>man pkg-config</strong>"
+
+
