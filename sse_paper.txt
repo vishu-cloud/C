@@ -1,0 +1,137 @@
+<h4>Hello ladies and gentlemen, Royal readers of my blog !</h4>
+<blockquote>
+<h4><span style="color:#000000;">A long time ago, </span>
+<span style="color:#000000;">in a galaxy far, far away. </span>
+<span style="color:#000000;"> it is a period of civil war. </span>
+<span style="color:#000000;">Cooler's spaceships, </span>
+<span style="color:#000000;">striking from a hidden base, </span>
+<span style="color:#000000;">have won their first victory against the evil Galactic Java Empire !</span></h4>
+</blockquote>
+Oh yes the Coolerudos strikes back ! like a STARWARS episode VI at "return of the JEDI", <a title="STARWARS returns" href="https://www.youtube.com/watch?v=_RFYoZ7H67A" target="_blank">when Master SKYWALKER  returns to his revenge !</a>
+
+No more jokes, so i wrote this post in english, consequently i need make some task at other languages(to study)...<strong> keep warning</strong> and prepare your eyes... (will be hard experience, <strong>my english is not very good</strong>)
+
+In last week following search algorithms, like a try to gain some performance at my private projects, i view some thing about "<a title="SSE4.2 whats is this ?" href="http://en.wikipedia.org/wiki/SSE4" target="_blank">SSE4.2</a>". so when i view the possibility to use<a title="XMM whats is this ?" href="http://en.wikipedia.org/wiki/Streaming_SIMD_Extensions#Registers" target="_blank"> "xmm0"(a register of 128 bits</a>), thinking "oh my god ! i wanna use it ! this is awesome!", some days studying it with my friend <a href="https://github.com/pl4nkt0n" title="pl4nkton's github" target="_blank">João Victorino aka "Pl4kt0n"</a>, After studying the concepts around SSE4.2, I ended up writing a program.
+
+<span style="color:#800000;"><strong>Relax brows ! don't have karate trick here !</strong></span>
+
+<img class="alignleft size-full wp-image-1035" src="https://coolerlab.files.wordpress.com/2014/10/chimp_karate_kick.gif" alt="Chimp_karate_kick" width="316" height="235" />To explain, i make two functions, one with the simple function "strcmp()", other with my implementation using SSE4.2 with Assembly ( i change AT&amp;T to Intel syntax("<a title="why at&amp;t not is cool ?" href="http://x86asm.net/articles/what-i-dislike-about-gas/" target="_blank">AT&amp;T" is very boring</a> ), for the reason that i guess  easy to follow examples of the manual<a title="Manual" href="https://software.intel.com/en-us/intel-isa-extensions" target="_blank"> 'intel's manual'</a>), other fact, i test my "strcmp()" function with "array of  words", to carry some results like "CPU cycles" to make the benchmark, so with it, we have some conditions to compare, just a cartesian choice to view and compare like a simple plot bar with "<a title="whats is gnuplot ?" href="http://www.gnuplot.info/" target="_blank">gnuplot</a>".
+
+You can view result here ! and <a title="gnuplot cmds" href="https://github.com/CoolerVoid/cooler_sse42_strcmp/blob/master/plot_compare.gp" target="_blank">gnuplot cmd here</a>!
+
+[caption id="" align="alignleft" width="640"]<a href="https://lh6.googleusercontent.com/-E0Emg7FFoz0/VG1tdXrP1iI/AAAAAAAAItg/ilFLzMjIFC0/w699-h524-no/profit.png"><img class="" src="https://lh6.googleusercontent.com/-E0Emg7FFoz0/VG1tdXrP1iI/AAAAAAAAItg/ilFLzMjIFC0/w699-h524-no/profit.png" alt="" width="640" height="480" /></a> Plot benchmark[/caption]
+
+<strong>Ok Cooler_ , what's the trick ?</strong>
+
+So there is no trick, generic condition results in common result, then following other way to find uncommon result...
+
+This code <strong>doesn't have trick</strong>, i use instruction "pcmpistri"(<strong>P</strong>acked <strong>C</strong>ompare <strong>I</strong>mplicit <strong>L</strong>ength <strong>S</strong>trings, <strong>R</strong>eturn<strong> I</strong>ndex) and  the "movdqu"(<strong>mov</strong>e <strong>u</strong>naligned <strong>d</strong>ouble <strong>q</strong>uadword) instruction must be used to transfer data from this into an XMM register, this istructions you can make many things around "strings", take a look at the following:
+
+[sourcecode language="c"]
+global strcmp_sse42_64
+; by Cooler_  c00f3r[at]gmail[dot]com
+; 64 bit
+; nasm -f elf64 code.s -o code.o
+; int strcmp_sse42_64(const char *, const char *);  // declare in C code
+strcmp_sse42_64:
+	push		rbp
+	mov		rbp, rsp
+	mov		rax, rdi
+	mov		rdx, rsi
+	sub		rax, rdx
+	sub		rdx, 16
+ 
+strloop_64:
+	add		rdx, 16
+	movdqu		xmm0, [rdx]
+	pcmpistri	xmm0, [rdx+rax], 0011000b ;compare... jump again if above...
+	ja		strloop_64
+	jc		blockmov_64 ; jump 2 movzx
+	xor		rax, rax ; clear return result...
+	jmp		quit
+
+blockmov_64:
+	add		rax, rdx	
+	movzx		rax, byte[rax+rcx] ; move with zero
+	movzx		rdx, byte[rdx+rcx]
+	sub		rax, rdx	
+	
+quit:
+	pop		rbp
+	ret
+[/sourcecode]
+
+So i use it to hook functions 32bit and 64bit version:
+[sourcecode language="c"]
+#if UINTPTR_MAX == 0xffffffff
+static int (*strcmp_sse42)(const char *, const char *) = strcmp_sse42_32;
+#elif UINTPTR_MAX == 0xffffffffffffffff
+static int (*strcmp_sse42)(const char *, const char *) = strcmp_sse42_64;
+#else
+	fprintf(stderr,"error in arch\n");
+	exit(0);
+#endif
+[/sourcecode]
+
+Before hooking it, you need to check whether or not your machine has SSE4.2 support. There are many ways of doing it, however, for the sake of simplicity, let's go with the following one:
+[sourcecode language="c"]
+void cpu_get(int* cpuinfo, int info)
+{
+	__asm__ __volatile__(
+		"xchg %%ebx, %%edi;"
+		"cpuid;"
+		"xchg %%ebx, %%edi;"
+		:"=a" (cpuinfo[0]), "=D" (cpuinfo[1]), "=c" (cpuinfo[2]), "=d" (cpuinfo[3])
+		:"0" (info)
+	);
+}
+
+void test_sse42_enable()
+{
+	int cpuinfo[4];
+	int sse42=0;
+
+	cpu_get(cpuinfo,1);
+
+	sse42=cpuinfo[2] & (1 << 20) || 0;
+
+	if(sse42)
+		puts("SSE4.2 Test...\n OK SSE 4.2 instruction enable !\n");
+	else {
+		puts("SSE4.2 Not enabled\n your CPU need SSE 4.2 instruction to run this programm\n");
+		exit(0);
+	}
+}
+[/sourcecode]
+
+look all source code <a href="https://github.com/CoolerVoid/cooler_sse42_strcmp" title="repository strcmp() with SSE4.2" target="_blank">here</a>!
+
+<blockquote>$ <strong>git clone</strong> https://github.com/CoolerVoid/cooler_sse42_strcmp
+$ make; <strong>./test</strong>
+SSE4.2 Test...
+ OK SSE 4.2 instruction enable !
+
+:::  strcmp() with SSE42: <strong>2812</strong>  cicles
+Array size of words is: 245 
+Benchmark strcmp() with SSE42 matchs is: 84 
+
+::: simple strcmp(): <strong>12663 </strong> cicles
+Array size of words is: 245 
+Benchmark strcmp() matchs is: 84 
+$ cat /proc/cpuinfo | grep "model name"
+model name	: Intel(R) Core(TM) i5-4690K CPU @ 3.50GHz
+$ gcc -v | grep "gcc version"
+gcc version 4.8.3 20140911 (Red Hat 4.8.3-7) (GCC) 
+$ uname -a
+Linux localhost.localdomain 3.15.10-201.fc20.i686 #1 SMP Wed Aug 27 21:33:30 UTC 2014 i686 i686 i386 GNU/Linux
+</blockquote>
+
+
+SSE is very common in image processing, game developers use it too, take a look at the following: 
+https://software.intel.com/en-us/articles/using-intel-streaming-simd-extensions-and-intel-integrated-performance-primitives-to-accelerate-algorithms
+
+Do you like CPU features ?  look <a href="https://gist.github.com/CoolerVoid/0e2b5791963dd6aa714e" title="cpuid" target="_blank">this</a>
+
+well well well a cup of Moloko to my  little Droogies
+<a href="https://coolerlab.files.wordpress.com/2014/10/moloko_gif.gif"><img src="https://coolerlab.files.wordpress.com/2014/10/moloko_gif.gif" alt="moloko_gif" width="500" height="324" class="alignleft size-full wp-image-1052" /></a>
+<strong>my fifty cents ! CHEERS !</strong>
