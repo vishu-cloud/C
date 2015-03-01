@@ -1,0 +1,351 @@
+Antes de entender a magia dos bits vamos ver algo leve, claro em
+linguagem C , bem como dar uma introdução ao entendimento de bits
+e seu funcionamento em variáveis.
+
+<a href="http://coolerlab.files.wordpress.com/2011/11/captura-de-tela-2014-07-14-acc80s-21-14-21.png"><img class="alignleft size-full wp-image-981" src="http://coolerlab.files.wordpress.com/2011/11/captura-de-tela-2014-07-14-acc80s-21-14-21.png" alt="Captura de Tela 2014-07-14 às 21.14.21" width="258" height="213" /></a>
+
+Uma variável do tipo "int" tem 4bytes ou seja 32bits
+
+se você faz:
+
+[sourcecode language="c"]
+ "int var = 3;"
+[/sourcecode]
+
+Então temos:
+
+4bytes = 32bits
+cada octeto é um byte, meio octeto pode-se chamar de<a title="oque é nibble" href="http://pt.wikipedia.org/wiki/Nibble" target="_blank"> nibble</a>.
+"...00000000 00000000 00000011"
+
+cada casa de número binário contamos como um bit
+bit nada mais é que mnemônico para "Binary digiT"
+
+Para saber número de bytes de uma variável usamos operador "sizeof(var)"
+que nos retorna o valor em bytes da variável.
+
+Se desejamos saber valor binário de um número fazemos divisão por 2
+e enquanto o resto da divisão for diferente de "1" fazemos a divisão
+no final pegamos os restos ao contrário para ser o resultado final
+
+número 12 para binário logo:
+
+[sourcecode language="c"]
+12 | 2
+12 +------                   1100 <-- resultado ao contrário
+ 0  6    | 2              -------------
+         +-----
+    0      3  | 2
+              +-----
+          1     1
+[/sourcecode]
+
+Resultado 1100,repare que só temos um nibble ou seja um semiocteto
+metade de 1 byte ou seja 4bits, lembra 1byte é 8 bits.
+
+façamos então um programa para automatizar a tarefa de converter
+decimal para binário
+
+[sourcecode language="c"]
+#include <stdio.h>
+
+int main()
+{
+ int bin[8],num=0,counter=0;
+
+ puts("Dec2Bin\n digite um numero");
+ scanf("%d",&num);
+
+//para somente quando a divisão der "1"
+ while(num!=1)
+ {
+//pegamos o resto da divisão ou se tiver um resultado é 1 se não é 0
+  bin[counter]=(num%2)?1:0;
+//dividimos num por 2 e armazenamos em num para pegar o próximo resto
+  num/=2;
+  counter++;
+ }
+ bin[counter]=num;
+
+//mostramos o array ao contrário
+ printf("\nResultado: ");
+ while(counter!=-1)
+ {
+  printf("%d",bin[counter]);
+  counter--;
+ }
+ printf("\n");
+
+ return 0;
+}
+[/sourcecode]
+
+continuando, tem outra forma melhor de se fazer isso, mas não
+é hora de abordar isso agora.
+
+Introdução Escovação de Bits "BitWise"
+=======================================
+
+Quando dizemos escovação de bits é uma mera referência ao trabalho
+de manipular bits para se obter certos resultados. pessoal que trabalha
+com microcontrolador seja AVR,PIC por muitas vezes tem que fazer tal
+manipulação. Quando queremos desempenho escovação de bits pode nos
+ajudar também embora o compilador já otimize muitas das tarefas.Outra
+utilização é em tratamento de imagens e manipulação das mesmas,OpenCV
+mesmo obriga você usar sempre que não existe uma solução pronta...
+
+Bit Shifting "deslocamento de bit"
+======================================
+
+Deslocar um bit nada mais é que mudar o bit da sua posição original
+para se chegar num certo resultado,chamamos esta técnica de bit shift
+é um mnemônico do assembly "shl,shr"(shifiting left,shifiting right),
+vamos a um exemplo de deslocamento para esquerda:
+
+[sourcecode language="c"]
+ int var = 3;
+ var <<= 1;
+
+ o nosso 3
+
+  0011
+
+ recebeu um deslocamento para esquerda
+
+  0110
+[/sourcecode]
+
+resultou em "6", pode dar uma ilusão de aritmética de produto ou de
+adição por ele mesmo, mas foi o resultado do deslocamento, forma
+matemática correta segundo o livro do K&amp;R para explanar nossa expressão
+do exemplo seria "2*3¹".
+
+agora vamos ver deslocamento para direita:
+
+[sourcecode language="c"]
+ int var = 100;
+
+ temos então 1100100
+
+ var >>= 2; 
+
+ removemos os dois últimos digitos 
+
+  11001
+[/sourcecode]
+
+nos resulta "25",forma matemática para tal é a seguinte "(100/2)²"
+você me diz 25mil, cadê os zeros ? como disse remove os dois últimos
+dígitos.
+
+Mascaramento de Bit
+======================
+
+OR
+---
+Vamos ao operador "|" tem o mnemonico "OR" em assembly, vamos entender seu impacto
+
+[sourcecode language="c"]
+ x=26|19;
+
+   11010
+ | 10011
+ ---------
+   11011   ==  27
+[/sourcecode]
+
+AND
+---
+Agora o "&amp;" mnemônico com "AND" em assembly
+
+[sourcecode language="c"]
+ x=26&19;
+
+   11010
+ & 10011
+ ---------
+   10010 == 18
+[/sourcecode]
+
+NOT
+---
+O "~" é mnemônico com "NOT" ou seja ele é uma negação, fazendo um efeito inverso
+do seu valor carregado, ou seja onde está 1 fica zero e vice e versa.
+
+[sourcecode language="c"]
+ x=~26; 
+
+  11010
+   flip
+  00101
+[/sourcecode]
+
+resultado seria -27, Como mas por que não 5 ? lembra que falei um "int" é
+4 bytes equivale a 32bits, então
+
+0000 0000 0001 1010
+
+1111 1111 1110 0101
+
+agora sim,eu fiz em nibble para não precisar escrever muito...
+
+XOR
+---
+O "^" é mnemônico para o XOR
+
+[sourcecode language="c"]
+ x=26^19;
+
+   11010
+ ^ 10011
+ ---------
+   01001  == 9
+[/sourcecode]
+
+veja se a tabela ne ajuda
+
+[sourcecode language="c"]
+,---,---,--------,
+| a | b |  a ^ b |  pode-se fazer SWAP sem usar uma terceira variável
+|---|---|--------|  exemplo:
+| 0 | 0 |   0    |
+| 0 | 1 |   1    |  int A=4,B=7;
+| 1 | 0 |   1    |  A^=B; B^=A; A^=B;
+| 1 | 1 |   0    |  // "A" agora vale 7
+'---'---'--------'
+ alguns usam XOR em criptografia também...
+[/sourcecode]
+
+Escovando Bits
+================
+
+Vamos usar bitwise para obter "desempenho" vejamos
+alguns códigos com bitwise
+
+[sourcecode language="c"]
+
+// programa para verificar se é impar ou par
+main(int argc,char *argv[]){printf("%s\x0a",(!((atoi(argv[1]))&1))?"Par":"impar");}
+// Isso = "x&1" usa mesma lógica disso "x%2"
+// se retornar 0 é por que o último num binário é ZERO ou seja PAR...
+
+// Sempre que precisar verificar se um número é multiplo
+// fazer
+resto = num & (divisor - 1);
+x = 122 % 6;
+//forma mais rápida
+x = 122 & (6 - 1);
+
+/*
+se quiser fazer casting de float para Int
+invés de fazer Casting de Float para Int assim "x = int(3.142)",
+faça assim "x=3.142>>0;", melhora desempenho em 10%
+*/
+//operações ternárias são rapidas mas bit a bit são mais</b>
+//invés
+i = x < 0 ? -x : x;
+//faça
+i = (x ^ (x >> 31)) - (x >> 31);
+
+//Comparando dois inteiros
+x = a * b > 0;
+//melhor forma
+x = a ^ b >= 0;
+
+//Comparar duas variáveis ver qual é a maior e menor
+gamma = y ^ ((x ^ y) & -(x < y)); // gamma=menor(x, y)
+gamma = x ^ ((x ^ y) & -(x < y)); // gamma=maior(x, y)
+
+//Determinar se um inteiro é uma potência de 2
+x = v && !(v & (v - 1));
+//vai retornar verdadeiro ou falso ;)
+
+//média para int
+int a=6,b=8; printf("%d\n",((a&b)+(a^b)>>1));
+
+//verificar se a posição "n" em bit é "1"
+if( n & 1 << i ) 
+
+[/sourcecode]
+
+lembra do nosso código simples de converter decimal para binário
+vamos fazer um usando escovação de bits :-)
+
+[sourcecode language="c"]
+// retirado da header beer.h https://github.com/CoolerVoid/C/edit/master/beer.h
+char * dec2bin(int n, char * string)
+{
+ int i;
+ static int size = 8 * sizeof(int);
+
+  for(i = size - 1; i >= 0; i--, n >>= 1)
+   string[i] = (01 & n) + '0';
+
+ string[size] = '&#092;&#048;';
+ return string;
+}
+[/sourcecode]
+
+calcular raiz quadrada escovando bit por que não...
+
+[sourcecode language="c"]
+// retirado da header beer.h https://github.com/CoolerVoid/C/edit/master/beer.h
+int bit_sqrt(int num)
+{
+//so 32 is sizeof(int)<<3
+ int num0=num,result=0,tbit=1<<((sizeof(int)<<3)-2);
+
+ if(num<=0)
+ {
+  printf("error bit_sqrt(), num = %d ",num);
+  return -1;
+ }
+
+ while(tbit>num0)
+  tbit>>=2;
+ while(tbit^0)
+ {
+  if(num0>=result+tbit)
+  {
+   num0-=result+tbit;
+   result=(result>>1)+tbit;
+  }else
+   result>>=1;
+  tbit>>=2;
+ }
+ return result;
+}
+[/sourcecode]
+
+não se compara esta função a de APIs como GMP,OpenSSL
+mesmo por que é uma função simples muito menos a "math.h",
+foi mais para ilustrar.
+
+posso usar bitwise em strings ?
+se for um ponteiro por que não
+
+[sourcecode language="c"]
+// return reverse string
+char *strrev(char *str)
+{
+ char *p1, *p2;
+
+ if(! str || ! *str)
+  return str;
+ for(p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
+ {
+  *p1 ^= *p2;
+  *p2 ^= *p1;
+  *p1 ^= *p2;
+ }
+ return str;
+}
+[/sourcecode]
+
+esse assunto é gigante vou ficar por aqui, por final
+sugiro que leiam caso queiram se aprofundar no assunto
+de bitwise , o livro "hacker's delight"
+
+<a title="o livro" href="http://www.hackersdelight.org/" target="_blank">hackers delight </a>
+
+<a href="http://coolerlab.files.wordpress.com/2011/11/2d175-hackers_delight.jpg"><img class="alignleft size-full wp-image-984" src="http://coolerlab.files.wordpress.com/2011/11/2d175-hackers_delight.jpg" alt="2d175-hackers_delight" width="240" height="240" /></a>
