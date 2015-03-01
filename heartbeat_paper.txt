@@ -1,0 +1,306 @@
+Iai meus Leitores prediletos do meu blog falido :-P
+
+Bom neste Post, vou falar sobre <strong>detector de mentira</strong>
+algo simples em conjunto com um "heartbeat" , ideia do detector
+de mentira não é só pegar batidas do coração mais pegar dados
+de suor,movimentos da perna entre outras coisas significantes,
+como nosso post vai ser informal não espere aqui um guia
+definitivo de polígrafo.
+
+<img src="http://tvmedia.ign.com/tv/image/article/104/1047990/line-o-rama-the-simpsons-moe-szyslak-20091119034544332-000.jpg" alt="moe" />
+
+Nossa missão aqui é fazer um <strong>HeartBeat</strong> com um outro sistema
+para pegar dados e fazer o Plot bem simples algo bem tabajara,
+Plot é para a pessoa que vai julgar se é verdade ou mentira poder
+ter algo visual, poderia ter usado um <strong>LED RGB </strong>para
+ter seu valor atribuído de a cordo com valor do heartbeat, eu gravei
+um vídeo para mostrar um ponto empírico. Agradeço ajuda do "<strong>Eremitah</strong>"
+por dar a dica do buzzer fez eu economizar uns 4 dollares com sensores
+de tremor, buzzer você acha em qualquer lugar custa de 15centavos a
+2 reais no máximo.
+
+[youtube http://www.youtube.com/watch?v=o3VbAOMWa6M&amp;w=520&amp;h=415]
+
+Foi usado apenas um <strong>buzzer</strong> , seria interessante usar mais de um, talvez
+usar uma rede neural para pegar as batidas certas de forma descartar os erros e a ajudar no julgamento
+de resultados de 4 sensores ou mais ,bem como sensor de umidade e movimento etc, talvez aumentar o <strong>delay</strong> de
+5 segundos. fica a seu critério...
+
+vamos a diversão,código do arduino
+
+[sourcecode language="c"]
+/*
+author:Antonio Costa (Cooler_)
+e-mail:c00f3r[at]gmail[dot]com
+
+ Simple HeartBeat Detector with Arduino
+
+ needs:
+  1 resistor 1M ohms
+  1 Buzzer
+  1 Led +1 resistor 1k
+  y finger on buzzer and run...
+
+*/
+
+#include <Time.h>  
+
+// cada X segundos pega Y batidas
+#define SEG 5
+
+ int count=0;
+ int ledPin = 6;
+ int piezoPin = 5;
+ int sensorValue = 0; 
+
+void setup() {
+ Serial.begin(9600);
+ pinMode(ledPin, OUTPUT);
+ pinMode(piezoPin, INPUT);
+}
+
+void loop()
+{
+ sensorValue = analogRead(piezoPin);
+ if(sensorValue)
+ {
+  count+=sensorValue;
+// light LED by knock
+  digitalWrite(ledPin, HIGH);
+  delay(25);
+  digitalWrite(ledPin, LOW);
+ }
+
+ if( (!(second()%SEG)) && (count>20) )
+ {
+//  Serial.print("second:");
+//  Serial.println(second());
+//  Serial.print("HeartBeats:");
+  Serial.println(count);
+  count=0;
+  delay(50);
+ }
+}
+[/sourcecode]
+
+Agora código que vai ficar no nosso PC
+
+[sourcecode language="c"]
+/*
+contato: c00f3r@gmail.com
+autor: Antonio Costa aka Cooler_
+coolerlab.wordpress.com
+
+Simple Heartbeat detector with arduino
+
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <termios.h>
+#include <fcntl.h>
+#include <time.h>
+
+// sempre concatene com 'B' a  taxa de transmissão ,"9600" padrão do AVR
+#define BAUDRATE B9600
+
+// macros debug
+#define BUGVIEW 1
+
+#define DEBUG(x, s...) do { \
+ if (!BUGVIEW) { break; } \
+ time_t t = time(NULL); \
+ char *d = ctime(&t); \
+ fprintf(stderr, "%.*s %s[%d] %s(): ", \
+ (int)strlen(d) - 1, d, __FILE__, \
+ __LINE__, __FUNCTION__); \
+ fprintf(stderr, x, ## s); \
+} while (0);
+
+// vai pegar os dados a cada 5 segundos
+#define SECOND 5
+
+int serialboot(const char* serialport, int baud);
+int serialread( int fd, char* buf, char until, int max );
+int WriteFile(char *file,char *str);
+
+void banner()
+{
+ printf("\nFollow patern: ./heartbeat <SerialPort> <times 2 get>\n"
+  "Just Another geek thing to get HeartBeat and plot!!!\n"
+  "Coded By Cooler_\n"
+  "coolerlab.wordpress.com\n"
+  "\n");
+}
+
+int main(int argc, char *argv[])
+{
+ int baudrate = BAUDRATE,fd=0,counter=0,times=0;
+ char *buf=malloc(sizeof(char)*16);
+ char *serialport=malloc(sizeof(char)*512);
+
+// apagamos o último log
+ unlink("logbeat.txt");
+
+  if(argc<2)
+  {
+   banner();
+   exit(EXIT_SUCCESS);
+  }
+
+  printf("Serial:%s\n",argv[1]);
+
+  strncpy(serialport,argv[1],sizeof(char)*511);
+  fd=serialboot(serialport, baudrate);
+
+   if(fd<=0)
+   {
+    DEBUG("veja se o dispositivo esta conectado!!");
+    DEBUG("%d\n",fd);
+    exit(EXIT_SUCCESS);
+   }
+
+//número de dados que seram pegos a cada 5 segundos
+  if(strnlen(argv[2],3)<2)
+  {
+   times=atoi(argv[2]);
+  } else {
+   puts("error at argument time");
+   exit(EXIT_SUCCESS);
+  }
+
+  while(1)
+  {
+   serialread(fd, buf, '\n',15);
+
+   if(strncmp(buf," ",15)>0)
+   {
+    fprintf(stdout,"%s",buf);
+    sleep(SECOND);
+    WriteFile("logbeat.txt",buf);
+    times--;
+   }
+// se terminar número de vezes então pula
+   if(!times)
+    break;
+  }
+
+// nosso amigão gnuplot nos ajudando :-)
+ FILE *pipe = popen("gnuplot -persist","w");
+  fprintf(pipe, "set grid'\n");
+  fprintf(pipe, "set style data lines\n");
+  fprintf(pipe, "set terminal png\n");
+  fprintf(pipe, "set output 'heartbeat.png'\n");
+  fprintf(pipe, "plot \"logbeat.txt\"\n");
+ pclose(pipe);
+
+// fechando a banca xD
+ puts("end HeartBeat, look image heartbeat.png");
+ close(fd);
+ free(buf);
+ free(serialport);
+
+ exit(EXIT_SUCCESS);
+} 
+
+int serialread(int fd, char* buf, char until,int max)
+{
+char b[1];
+int i = 0;
+do {
+int n = read( fd, b, 1 );
+if( n==-1 )
+return -1;
+if( !n )
+{
+usleep(16000);
+continue;
+}
+buf[i] = b[0];
+i++;
+} while ( b[0]!=until && max != i );
+buf[i] = 0;
+return 0;
+}
+
+int serialboot(const char* serialport, int baud)
+{
+ struct termios toptions;
+ int fd;
+
+    fd = open(serialport, O_RDWR | O_NOCTTY | O_NDELAY);
+
+    if(fd == -1)
+    {
+     DEBUG("serialboot: não foi possivel abrir a porta ");
+     return -1;
+    }
+
+    if(tcgetattr(fd, &toptions) < 0)
+    {
+     DEBUG("serialboot: nao foi possivel pegar atributos do terminal");
+     return -1;
+    }
+    speed_t brate = baud;
+    cfsetispeed(&toptions, brate);
+    cfsetospeed(&toptions, brate);
+   // para default recv com termios.h
+    // 8N1
+    toptions.c_cflag &= ~PARENB;
+    toptions.c_cflag &= ~CSTOPB;
+    toptions.c_cflag &= ~CSIZE;
+    toptions.c_cflag |= CS8;
+    // no flow control
+    toptions.c_cflag &= ~CRTSCTS;
+    toptions.c_cflag |= CREAD | CLOCAL;  // turn on READ & ignore ctrl lines
+    toptions.c_iflag &= ~(IXON | IXOFF | IXANY); // turn off s/w flow ctrl
+    toptions.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG); // make raw
+    toptions.c_oflag &= ~OPOST; // make raw
+
+    // olhe http://unixwiz.net/techtips/termios-vmin-vtime.html
+    toptions.c_cc[VMIN]  = 0;
+    toptions.c_cc[VTIME] = 20;
+
+    if(tcsetattr(fd, TCSANOW, &toptions) < 0)
+    {
+     DEBUG("serialboot: nao foi possivel adicionar atributos no term erro 1");
+     return -1;
+    }
+
+ return fd;
+}
+
+//escreve num txt
+int WriteFile(char *file,char *str)
+{
+ FILE *arq;
+
+ arq=fopen(file,"a");
+  if(!arq)
+  {
+   DEBUG("error in WriteFile() %s",file);
+   return 0;
+  }
+ fprintf(arq,"%s",str);
+ fclose(arq);
+ return 1;
+}
+[/sourcecode]
+
+<strong>$ gcc -o heartbeat heartbeat.c -Ofast -fstack-protector-all -Wl,-z,relro,-z,now -D_FORTIFY_SOURCE=fast
+$ ./heartbeat /dev/ttyUSB1 10</strong>
+deixe seu dedo indicador do braço direito no buzzer,
+quando ver o LED piscar quer dizer que esta capitando...
+
+<strong>*Dica caso queira testar em alguém </strong>
+-faça um PCB , algo decente, o que mostrei foi só protótipo,use a imaginação
+-use algum elástico de forma colar o buzzer no local onde quer capturar as batidas
+-comece perguntando coisas que são obviamente verdade e analise o Plot
+-preste atenção nos ticks nervosos
+-olhe outros projetos hack a day ,por la tem vários polígrafos
+-altere o delay e use mais buzzers se necessário
+
+espero ter ajudado ;-)
+
+curtiu ? quer mais procura no google por "<strong>Knock sensor</strong>"
