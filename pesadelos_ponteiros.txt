@@ -1,0 +1,472 @@
+Geralmente meio acadêmico da uma explicação de <strong><a title="wikipedia ponteiros" href="http://pt.wikipedia.org/wiki/Ponteiro_%28programa%C3%A7%C3%A3o%29" target="_blank">ponteiros</a></strong> deixando todos enrolados com apenas o básico , o que faz todos desviar do caminho dos ponteiros , os poucos que usam são aqueles que tem sido autodidata, bom alguns livros tem exemplos bons de ponteiros como no livro Ansi C do <strong>K&amp;R</strong>, entretanto a falta de popularidade de tais dicas torna tal assunto meio obscuro...
+
+<strong>*Perguntas frenéticas</strong>
+Por que usar ponteiros ?
+<strong>--Desempenho</strong> e maior manipulação dos dados,  fácil para depurar problemas...
+E se eu não usar ?
+<strong>--Na depuração</strong> de códigos <strong>STACK</strong> é bem complicada comparada com <strong>HEAP(uso do malloc(),sbrk()..)</strong>, no tratamento de dados gigantes poderá ter algumas <strong>Traps Malditas!</strong>... (sim com <a title="o que é alloca() ?" href="http://man7.org/linux/man-pages/man3/alloca.3.html" target="_blank">alloca() </a>pode usar ponteiro entretanto usaria STACK)
+<a href="https://coolerlab.files.wordpress.com/2011/10/neca-elm-street-1-600x420.jpg"><img class="alignleft  wp-image-1000" src="http://coolerlab.files.wordpress.com/2011/10/neca-elm-street-1-600x420.jpg" alt="neca-elm-street-1-600x420" width="366" height="256" /></a>
+
+<strong>O que é ponteiro ?</strong>
+Nada mais é que uma refêrencia , um tipo de dado que aponta dados que estão armazenados na memória, ponteiros são uma <a title="Abstração" href="http://pt.wikipedia.org/wiki/Abstra%C3%A7%C3%A3o">abstração</a> da capacidade de endereçamento fornecidas pelas <a title="Arquitetura de computadores" href="http://pt.wikipedia.org/wiki/Arquitetura_de_computadores">arquiteturas</a> modernas. Em termos simples, um <a title="Endereço (memória)" href="http://pt.wikipedia.org/wiki/Endere%C3%A7o_%28mem%C3%B3ria%29">endereço de memória</a>, ou índice numérico, é definido para cada unidade de memória no sistema, no qual a unidade é tipicamente um <a title="Byte" href="http://pt.wikipedia.org/wiki/Byte">byte</a> ou uma <i><a title="Palavra (ciência da computação)" href="http://pt.wikipedia.org/wiki/Palavra_%28ci%C3%AAncia_da_computa%C3%A7%C3%A3o%29">word</a></i>, o que em termos práticos transforma toda a memória em um grande <a class="mw-redirect" title="Array" href="http://pt.wikipedia.org/wiki/Array">vetor</a>.<sup id="cite_ref-1" class="reference"><a href="http://pt.wikipedia.org/wiki/Ponteiro_%28programa%C3%A7%C3%A3o%29#cite_note-1">1</a></sup> Logo, a partir de um endereço, é possível obter do sistema o valor armazenado na unidade de memória de tal endereço. O ponteiro é um <a title="Tipo de dado" href="http://pt.wikipedia.org/wiki/Tipo_de_dado">tipo de dado</a> que armazena um endereço...
+
+Vamos a um exemplo <strong>básico</strong> para depois ver algo <strong>complexo </strong>
+
+[sourcecode language="c"]
+#include <stdio.h>
+#include <string.h>
+
+int main()
+{
+// ponteiro com int
+ int *x,*y; // antes de usar um ponteiro é bom inicializar com "NULL", mas como é apenas exemplo de começo fica sem ;-[
+
+// fazemos o casting para ponteiro de int
+ x=(int *)256;
+ y=(int *)256;
+// casting para int antes da adição
+ printf("%d \n",((int)x)+((int)y));
+
+ puts("digite um numero para adicao com y...");
+ scanf("%d",&x);
+ printf("%d \n",((int)x)+((int)y));
+
+// ponteiro com strings...
+ char *word;
+
+ word="ola";
+ puts(word);
+ word="lol";
+ puts(word);
+// 0[l] 1[o] 2[l]   word[2] logo temos "l"
+ printf("char: %c \n",*(word+2));
+
+ return 0;
+}
+[/sourcecode]
+
+<strong>vamos entender algumas práticas comuns de se ver depois e partir para exemplos</strong>
+
+[sourcecode language="c"]
+ int i           //Int variável 'i'
+ int *p          //'P' ponteiro para um int
+ int a[]         //Matriz 'a' de Int
+ int f()         //'F' função com valor de retorno do tipo int
+ int **p         //'Pp' ponteiro para um ponteiro para um int
+ int (*pa)[]     //'Pa' ponteiro para um array de int
+ int (*pf)()     //pf ponteiro para uma função com valor de retorno int
+ int *p[]       //Array 'p' de ponteiros para um int
+ int *var()       //Função "var", que retorna um ponteiro para um int
+ int ***var       //'var' ponteiro para um ponteiro para um ponteiro para um int
+ int (**var)[]  //'var' ponteiro para um ponteiro para um array de int
+ int (**var)()  //'var' ponteiro para um ponteiro para uma função com valor de retorno do tipo int
+ int *(*c)[]  //'c' ponteiro para uma matriz de ponteiros para um int
+ int *(*c)()  //"c 'ponteiro para uma função com valor de retorno do tipo ponteiro para um int
+ int **app[]    //'App' ponteiro para um ponteiro para uma matriz de ponteiros para um int
+ int (*b[])[] //Uma série de 'b' ponteiros para um array de int
+ int (*c[])() /Um array 'c' ponteiros para uma função com valor de retorno do tipo int
+ int ***fpp()   //"Fpp 'função que retorna um ponteiro para um ponteiro para um ponteiro para um int
+ int (*fpa())[] //Função 'fpa ", que retorna um ponteiro para um array de int
+ int (*fpf())() //"FPF" função que retorna um ponteiro para uma função com valor de retorno int
+[/sourcecode]
+
+Fique calmo <strong>não é para decorar</strong> , tenha em mente leitura da esquerda para direita, e sempre começando pelo nome da variável...
+
+Uma prática muito comum em C é usar <strong>void pointer</strong>, para muitos que estão iniciando não é normal, entretanto estudando códigos de terceiros pode-se ver muito , usar ponteiro colabora no <strong>desempenho</strong> e o código em
+<strong>Assembly</strong> gerado fica menor de fato,um "<strong>disassemble main</strong>" no <a title="GDB doc" href="http://www.gnu.org/s/gdb/documentation/" target="_blank">GDB</a> pode te dar ponto empírico.
+<strong>
+Um exemplo vale mais do que mil palavras:</strong>
+
+[sourcecode language="c"]
+// exemplo void pointer by Cooler_
+#include <stdio.h>
+
+//ideia de polimorfismo
+void foo(void *point,int size)
+{
+// int == 4 bytes
+ if(size==sizeof(int))
+//tem que fazer casting do ponteiro para STDOUT
+  printf("int : %d , bytes: %d\n",*(int *)point,sizeof(point));
+
+// double == 8 bytes
+ if(size==sizeof(double))
+//casting de novo para o write(1...
+  printf("double : %f , bytes: %d\n",*(double *)point,sizeof(double));
+}
+
+int main()
+{
+ int a=64;
+ double b=3.14;
+
+ printf("bytes do void : %d\n",sizeof(void));
+// & usamos para dizer o endereço da memória de determinada variável
+ foo(&a,sizeof(int));
+ foo(&b,sizeof(double));
+
+ return 0;
+}
+[/sourcecode]
+
+Outro exemplo seguindo a mesma lógica
+
+[sourcecode language="c"]
+#include <stdio.h>
+#include <string.h>
+
+typedef struct _myst
+{
+ int a;
+ char b[10];
+}myst;
+
+void func(myst *mt)
+{
+ printf("resposta %d %s \n",mt->a,mt->b);
+}
+
+int main()
+{
+ void (*resposta)(void *);
+
+ myst x;
+ x.a=4;
+ strncpy(x.b,"1234",9);
+ resposta = (void*)func;
+ resposta(&x);
+
+ return 0;
+}
+[/sourcecode]
+
+Outra prática muito vista é o "<strong>ponteiro de arrays para funções</strong>",
+<strong>vejamos terceiro exemplo:</strong>
+
+[sourcecode language="c"]
+// example pointer of arrays to function by Cooler_
+#include <stdio.h>
+#include <malloc.h>
+
+void foo1(int x)
+{
+ printf("int: %d\n",x);
+}
+
+void foo2(int x)
+{
+ printf("num: %d\n",x);
+}
+
+void foo3(int z)
+{
+ printf("result %d\n",z*z);
+}
+
+void func2func(void (*fp)(void *), void *q)
+{
+  fp(q);
+}
+
+int main()
+{
+//se a função tiver mais de um argv use "," (int,char...
+ void (**list)(int);
+//alocamos 3 endereços na heap
+ list=(void *)malloc(3*sizeof(void *));
+
+ list[0]=foo1;
+ list[0](2);
+ list[1]=foo2;
+ list[1](4);
+ list[2]=foo3;
+ list[2](8);
+
+ // função para função lol
+ func2func(foo2, 4);
+
+ free(list);
+ return 0;
+}
+[/sourcecode]
+
+Outro exemplo usando <strong>função com argumento para função:</strong>
+
+[sourcecode language="c"]
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#define w printf
+#define MAX_BUF 128
+#define array_num(array) (sizeof(array) / sizeof *(array))
+
+void bubble(void *p, int width, int N,int(*fptr)(const void *, const void *));
+int compara_letras(const void *m, const void *n);
+int compara_numeros(const void *m, const void *n);
+
+int main()
+{
+ int lista[]={4,2,1,5,3,8,10,9,0,45};
+ char nomes[6][20] = {"Madruga","Arara","Zebra","Elefante","Babaca","Gato"};
+ short i;
+
+ for(i=0; i<=array_num(lista)-1; i++)
+  w("%d\n",lista[i]);
+ for(i=0; i<=array_num(nomes)-1; i++)
+  w("%s\n",nomes[i]);
+ w("--------------\nagora dando buble sort nas listas\n");
+ bubble(lista, 4, 10, compara_numeros);
+ bubble(nomes, 20, 6, compara_letras);
+ for(i=0; i<=9; i++)
+  w("%d\n",lista[i]);
+ for(i=0; i<=5; i++)
+  w("%s\n",nomes[i]);
+
+ return 0;
+}
+
+// função com argumento para função
+void bubble(void *p, int width, int N, int(*fptr)(const void *, const void *))
+{
+ int i, j, k;
+ unsigned char buf[MAX_BUF];
+ unsigned char *bp = p;
+  for(i = N-1; i >= 0; i--)
+  {
+   for(j = 1; j <= i; j++)
+   {
+//repare que fptr é a função escolhida pelo usuário
+    k = fptr((void *)(bp + width*(j-1)), (void *)(bp + j*width));
+    if(k > 0)
+    {
+     memcpy(buf, bp + width*(j-1), width);
+     memcpy(bp + width*(j-1), bp + j*width , width);
+     memcpy(bp + j*width, buf, width);
+    }
+   }
+  }
+}
+//comparando letras graças "strcmp" função da lib "string.h"
+  int compara_letras(const void *m, const void *n)
+  {
+   char *m1 = (char *)m;
+   char *n1 = (char *)n;
+   return (strcmp(m1,n1));
+  }
+//comparando numeros
+  int compara_numeros(const void *m, const void *n)
+  {
+   long *m1, *n1;
+   m1 = (long *)m;
+   n1 = (long *)n;
+   return (*m1 > *n1);
+  }
+[/sourcecode]
+
+Outro exemplo arrays tridimensionais com ponteiros
+
+[sourcecode language="c"]
+/*
+ *   Explanação arrays tridimensionais com Ponteiros
+ *
+ *
+ *
+ * c00f3r[at]gmail[dot]com
+ * by Cooler_
+ */
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+/* array tridimensional
+ *
+ * [][][]
+ * | | |_posição do caracter, todos caracter formam 1 palavra
+ * | |___número da posição onde esta a palavra
+ * |____ número da lista de palavras a usar
+ *
+
+ */
+//  produto por 2 de char** pois vamos fazer 2 listas de palavras
+ char ***lists=(char ***)malloc( 2*sizeof(char **)   );
+
+//produto por 3 em char* pq vamos usar 3 palavras
+ *(lists+0)=(char **)malloc(3*sizeof(char *));
+// pode-se fazer tb lists[0][0]="ola"
+ *(*(lists+0)+0)="ola";
+ *(*(lists+0)+1)="Yay";
+ *(*(lists+0)+2)="lol";
+// adiciona mais um elemento caso queira
+ lists[0][3]=(char *)realloc(lists[0],4*sizeof(char *));
+ *(*(lists+0)+3)="iai";
+
+ *(lists+1)=(char **)malloc(3*sizeof(char *));
+ *(*(lists+1)+0)="epic";
+ *(*(lists+1)+1)="let";
+ *(*(lists+1)+2)="omg";
+
+ fprintf(stdout," %s \n %s \n %c\n",lists[0][2],lists[1][0],lists[0][0][1]);
+/* mostrando uma saida qualquer
+ repare o terceiro elemento palavra "ola" segunda letra "l"
+
+lists[0][0][1]='l'
+            |
+ [o][l][a] _|
+  0  1  2
+*/
+
+// usar free() onde usou malloc() para liberar memória HEAP
+ free(lists[0]);
+ free(lists[1]);
+ free(lists);
+
+// caso use windows coloque um pause aqui no final ;-)
+ return 0;
+}
+[/sourcecode]
+
+Exemplo ,uma agenda simples usando struct com ponteiros
+
+[sourcecode language="c"]
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+// by Cooler agenda exemplo
+
+//limite cadastros
+#define LIMITE 1024 
+
+#define BUFFER 32
+
+//macro Anti Bug do "new line" comum em compiladores antigos, 1 para ativar 0 para desativar
+#define ANTBUG 1
+
+struct agenda  {
+ char nome[BUFFER];
+ int ra;
+};
+
+struct agenda list[LIMITE],carry;
+struct agenda *lista=list;
+
+int cmp(const void *a, const void *b)
+{
+//faz o casting para struct e verifica em ordem decrescente
+ struct agenda *ia = (struct agenda *)a;
+ struct agenda *ib = (struct agenda *)b;
+ return (strcmp(ia->nome,ib->nome));
+}
+
+void banner()
+{
+ puts("\ncode agenda by cooler\n digite numero da opção\n 0- exit\n 1 inserir\n 2 remover \n 3 listar \n 4 listar em ordem de nome\n");
+}
+
+void inserir (int count)
+{
+ if(count != LIMITE)
+ {
+  puts("\ndigite nome");
+  scanf("%30s",lista[count].nome);
+#if ANTBUG
+  getchar();
+#endif
+  puts("\ndigite RA");
+  scanf("%6d",&lista[count].ra);
+#if ANTBUG
+  getchar();
+#endif
+ }
+ else {
+  puts("agenda cheia");
+ }
+}
+
+void delete(int count)
+{
+ int position=0,count3=0,count2=0;
+
+ puts("qual RA para remover cadastro ?\n");
+ scanf("%6d",&position);
+#if ANTBUG
+  getchar();
+#endif
+
+ count3=count;
+
+ while(count)
+ {
+   if(lista[count].ra == position)
+   {
+    count2=count;
+
+    while(count2<count3)
+    {
+     carry=lista[count2];
+     lista[count2]=lista[count2+1];
+     lista[count2+1]=carry;
+     count2++;
+    }
+
+    break;
+   }
+  count--;
+ }
+
+}
+
+void listar(int count)
+{
+ while(count)
+ {
+  fprintf(stdout,"Nome: %s  RA: %d   position: %d\n",lista[count].nome,lista[count].ra,count);
+  count--;
+ }
+}
+
+int main()
+{
+ int escolha=1,count=0;
+
+ while(escolha)
+ {
+  banner();
+  scanf("%1d",&escolha);
+#if ANTBUG
+  getchar();
+#endif
+  switch(escolha)
+  {
+   case 1:
+    count++;
+    inserir(count);
+   break;
+
+   case 2:
+    delete(count);
+    count--;
+    break;
+
+   case 3:
+    listar(count);
+   break;
+
+   case 4:
+// quicksort para organizar por nome nossa lista
+    qsort(lista,count+1,sizeof(struct agenda),cmp);
+    listar(count);
+   break;
+  }
+ }
+
+ puts("saindo");
+
+ return 0;
+}
+[/sourcecode]
+
+tem muitas dicas sobre o mesmo por ai, mas vou dar uma <strong>sugestão de leitura </strong>caso queira melhorar ainda mais em ponteiros famoso <strong>livro da truta</strong> :-)
+<a title="livro expert C" href="http://www.amazon.com/Expert-Programming-Peter-van-Linden/dp/0131774298" target="_blank"><img src="http://ecx.images-amazon.com/images/I/41186C2QEZL._SL500_AA300_.jpg" alt="expert C" /></a>
+
+e também esse <a title="material de ponteiros" href="http://cslibrary.stanford.edu/102/PointersAndMemory.pdf" target="_blank">material de stanford,</a>  espero ter ajudado ;-)
