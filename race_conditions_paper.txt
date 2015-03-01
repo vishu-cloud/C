@@ -1,0 +1,195 @@
+<strong> O que é ?</strong>
+
+Em palavras simples "<strong>Race Condition</strong>" é rotulado quando o código é uma <strong>condição não atômica ou seja thread-unsafe</strong> e não reentrante, u<span id="result_box" class="" lang="pt"><span class="hps">ma condição de corrida</span> <span class="hps">é um comportamento</span> <span class="hps">anômalo</span> <span class="hps">causado pela</span> <span class="hps">dependência</span> <span class="hps">inesperada </span></span><span class="" lang="pt"><span class="hps">no</span> <span class="hps">tempo relativo</span> <span class="hps">de eventos,</span><span class=""> Race Condition pode ter vários contextos tais como em "threads",</span></span><span id="result_box" class="" lang="pt"><span class=""> "Time of check, time of use race condition","switch" </span></span>em adição quando o desenvolvedor não trata todos os dados de entrada "stdin", algum desses dados pode comprometer a integridade do sistema seja abrindo algum arquivo como "<strong>/etc/shadow</strong>", fazendo disclosure de outros arquivos que você não gostaria, sim pode ter relação direta com a falha <strong>LFD(Local File Disclosure)</strong> na maioria dos casos comuns, mas condições de corrida estão além, imagina você manipular um arquivo temporário e criar um link simbólico para o local do qual gostaria, vou tentar passar um conceito básico neste post.
+<a href="https://coolerlab.files.wordpress.com/2011/11/road_rash_-_1992_-_electronic_arts1.jpg"><img class="alignleft  wp-image-989" src="http://coolerlab.files.wordpress.com/2011/11/road_rash_-_1992_-_electronic_arts1.jpg?w=645" alt="road_rash_-_1992_-_electronic_arts1" width="353" height="264" /></a>
+Vamos a um exemplo, tudo começa com uma má prática de permissão
+ou acesso no file system com uso sem tratamento dos dados dos argumentos
+passados para os <strong>syscalls</strong> exemplo <strong>open(),read(),chmod(),symlink(),unlink(),
+lchown(),chown()</strong> entre outras funções que envolve manipulação de permissões e
+arquivos , "háha mais eu uso fopen()" rode um "<a title="o que é strace ?" href="http://en.wikipedia.org/wiki/Strace" target="_blank">strace</a>" no executável do
+seu programa que você terá uma surpresa o syscall open() estará la.
+linguagens como Java,Perl,Ruby dependem da <strong>libC</strong> para rodar em unix
+like fora as syscalls então não são imunes ao problema , irei mostrar
+um ponto empírico;
+<code>
+cooler@lisperian:/etc$<strong> LD_TRACE_LOADED_OBJECTS=1 jvm</strong>
+linux-gate.so.1 =&gt; (0x0022a000)
+libpthread.so.0 =&gt; /lib/i386-linux-gnu/libpthread.so.0 (0x0093f000)
+libdl.so.2 =&gt; /lib/i386-linux-gnu/libdl.so.2 (0x00e12000)
+libutil.so.1 =&gt; /lib/i386-linux-gnu/libutil.so.1 (0x00183000)
+libssl.so.1.0.0 =&gt; /lib/i386-linux-gnu/libssl.so.1.0.0 (0x0018a000)
+libcrypto.so.1.0.0 =&gt; /lib/i386-linux-gnu/libcrypto.so.1.0.0 (0x0031a000)
+libz.so.1 =&gt; /lib/i386-linux-gnu/libz.so.1 (0x00110000)
+libm.so.6 =&gt; /lib/i386-linux-gnu/libm.so.6 (0x00c15000)
+<strong>libc.so.6</strong> =&gt; /lib/i386-linux-gnu/libc.so.6 (0x00641000) --&gt; aqui libC
+/lib/ld-linux.so.2 (0x00b20000)
+</code>
+Relaxe normal a "jvm" do java depender de C ,poh DMR morreu ninguém falo nada
+se fosse o James Gosling! hehehe...
+
+Ao falar de "<strong>Race Conditions</strong>" no contexto de "threads", temos duas formas condições não atômicas
+e atômicas ,condições atômicas não são vulneráveis , mas as condições não atômicas
+são vulneráveis são <strong>thread-unsafe e não reentrantes</strong>.
+
+<strong>*O que é "não reentrante" ?
+</strong>
+Não reentrante refere-se a qualidade duma subrotina de ser executada concorrentemente
+de forma insegura, é exatamente o antônimo de reentrante que seria uma subrotina segura.
+
+Ex:
+
+[sourcecode language="c"]
+
+ int madruga = 2;
+
+ int foo()
+ {
+   madruga += 8;
+   return madruga;
+ }
+
+ int gamma()
+ {
+   return ( ( foo() -4 ) << 2) ;
+ }
+[/sourcecode]
+
+Se duas thread executar uma função seja foo() ou gamma()
+vai dar algum bug com <strong>atropelamento da variável</strong> madruga
+dando um resultado inesperado...
+
+<strong>* O que é Thread-unsafe ?</strong>
+
+A thread fica insegura quando os dados de forma concorrentemente
+são alterados por usar uma variável global ou por não usar Lock por
+mutex , quando usamos fork() não precisamos nos preocupar, mas ao usar
+pthread por exemplo deve-se ter controle seja com mutex ou com semáfaros.
+
+Ex
+
+[sourcecode language="c"]
+// gcc -o code code.c -lpthread
+#include <stdio.h>
+#include <malloc.h>
+#include <pthread.h>
+
+int y=1;
+
+void *foo(void * sum)
+{
+ y+=*(int *)sum;
+ printf(" result: %d \n",y);
+}
+
+int main()
+{
+ int x=0,num_thread=20;
+ void *pointer=&y;
+
+ pthread_t * threads;
+ threads = (pthread_t *) malloc(num_thread * sizeof (pthread_t));
+
+  for(x = 0; x < num_thread; x++)
+   if(pthread_create (&threads[x], NULL, foo, pointer) != 0)
+    error ("pthread_create");
+
+  for(x = 0; x < num_thread; x++)
+   pthread_join (threads[x], NULL);
+
+ free(threads);
+ return 0;
+}
+[/sourcecode]
+
+veja que este código é executado sem nenhum controle dos dados
+ficam de acordo com o acaso de uma entropia da concorrência das
+threads...
+
+vamos passar o <strong>valgrind usando a tool helgrind</strong> para analisar o programa
+<code>
+cooler@lisperian:~/race_condition$ <strong>valgrind --tool=helgrind ./thread</strong>
+==4543== Helgrind, a thread error detector
+==4543== Copyright (C) 2007-2010, and GNU GPL'd, by OpenWorks LLP et al.
+==4543== Using Valgrind-3.6.1-Debian and LibVEX; rerun with -h for copyright info
+==4543== Command: ./thread
+==4543==
+resultado 2
+==4543== Thread #3 was created
+==4543== at 0x413A0B8: clone (clone.S:111)
+==4543==
+==4543== Thread #2 was created
+==4543== at 0x413A0B8: clone (clone.S:111)
+==4543==
+==4543== <strong>Possible data race during</strong> read of size 4 at 0x804a028 by thread #3
+==4543== at 0x804855D: foo (in /home/cooler/info_leak/race_condition/thread)
+==4543== by 0x4028F62: mythread_wrapper (hg_intercepts.c:221)
+==4543== by 0x4052D30: start_thread (pthread_create.c:304)
+==4543== by 0x413A0CD: clone (clone.S:130)
+==4543== <strong>This conflicts </strong>with a previous write of size 4 by thread #2
+==4543== at 0x8048566: foo (in /home/cooler/info_leak/race_condition/thread)
+==4543== by 0x4028F62: mythread_wrapper (hg_intercepts.c:221)
+==4543== by 0x4052D30: start_thread (pthread_create.c:304)
+==4543== by 0x413A0CD: clone (clone.S:130)
+==4543==
+==4543==<strong> Possible data race during</strong> write of size 4 at 0x804a028 by thread #3
+==4543== at 0x8048566: foo (in /home/cooler/info_leak/race_condition/thread)
+==4543== by 0x4028F62: mythread_wrapper (hg_intercepts.c:221)
+==4543== by 0x4052D30: start_thread (pthread_create.c:304)
+==4543== by 0x413A0CD: clone (clone.S:130)
+==4543== <strong>This conflicts with</strong> a previous write of size 4 by thread #2
+==4543== at 0x8048566: foo (in /home/cooler/info_leak/race_condition/thread)
+==4543== by 0x4028F62: mythread_wrapper (hg_intercepts.c:221)
+==4543== by 0x4052D30: start_thread (pthread_create.c:304)
+==4543== by 0x413A0CD: clone (clone.S:130)
+==4543==
+resultado 4
+resultado 8
+resultado 16
+resultado 32
+resultado 64
+resultado 128
+resultado 256
+resultado 512
+resultado 1024
+resultado 2048
+resultado 4096
+resultado 8192
+resultado 16384
+resultado 32768
+resultado 65536
+resultado 131072
+resultado 262144
+resultado 524288
+resultado 1048576
+==4543==
+==4543== For counts of detected and suppressed errors, rerun with: -v
+==4543== Use --history-level=approx or =none to gain increased speed, at
+==4543== the cost of reduced accuracy of conflicting-access information
+==4543== ERROR SUMMARY: 38 errors from 2 contexts (suppressed: 715 from 32)
+</code>
+O próprio valgrind já disse tudo ...
+
+Quanto ao <strong>fopen(),open()</strong> fica uma dica de como fazer da forma segura:
+
+https://www.securecoding.cert.org/confluence/display/seccode/FIO03-C.+Do+not+make+assumptions+about+fopen%28%29+and+file+creation
+
+Lembrando sempre de validar close(),fclose() também...
+
+https://www.securecoding.cert.org/confluence/display/seccode/FIO22-C.+Close+files+before+spawning+processes
+
+&nbsp;
+
+<strong>* Veja alguns exploits</strong>
+
+-Famoso XPL que se aproveita de um race condition <a title="h00lyshit" href="http://packetstormsecurity.org/files/48276/h00lyshit.c">"h00lyshit"</a>
+
+-Race condition no bzexe pode comprometer integridade de um sistema <a title="bzexerc" href="http://packetstormsecurity.org/files/106636/bzexe-exec.txt" target="_blank">veja</a>
+
+e muitos outros...
+
+Nos casos mais comuns é se aproveitar de um arquivo aberto para usar "symlink()"
+para dar disclosure de um "/etc/shadow" por exemplo, muitos programadores cometem erros
+em permissões ou em usar "open()", a dica em arquivos é usar "<a title="flock" href="http://beej.us/guide/bgipc/output/html/multipage/flocking.html" target="_blank">flock()</a>" .
+
+Um obrigado ao meu brother "<strong>sigsegv</strong>",que está presente no servidor irc.freenode.net
+canal #c-br, Valeu pela dicas de race condition sigsegv ;-)
