@@ -1,0 +1,374 @@
+Anos que digo para mim que vou escrever algo de <a title="o que é assembly ?" href="http://pt.wikipedia.org/wiki/Assembly" target="_blank">"Assembly"</a> vai ano e passa, acabo deixando
+de lado, já algum tempo ando estudando fazendo coisas simples bem devagar, isso tem me ajudado a depurar meus programas em <strong>linguagem C</strong>, claro que também me ajuda nos <strong>skills de hacking</strong> seja com <a title="o que é engenharia reversa ?" href="http://pt.wikipedia.org/wiki/Engenharia_reversa" target="_blank">engenharia reversa</a> ou para entender problemas que tenham  <a title="artigo de overflow do m0nad" href="http://bugsec.googlecode.com/files/buffer_overflow_iniciantes.pdf" target="_blank">overflow</a>, programar para um microcontrolador etc...
+
+[caption id="attachment_936" align="alignleft" width="300"]<a href="http://coolerlab.files.wordpress.com/2012/04/black_sabbath_primage_hhn.jpg"><img class="size-medium wp-image-936" alt="Se assembly fosse banda seria uma banda de heavy metal... rsrs" src="http://coolerlab.files.wordpress.com/2012/04/black_sabbath_primage_hhn.jpg?w=300" width="300" height="240" /></a> Se assembly fosse banda seria uma banda de heavy metal... rsrs[/caption]
+
+Antes de começar queria <strong>agradecer</strong> de coração "<a title="blog do sigsegv" href="http://felipe.ath.cx/" target="_blank">sigsegv</a>","<a title="blog do m0nad" href="http://m0nadlabs.wordpress.com/" target="_blank">m0nad</a>","<a title="site do iak" href="http://www.secplus.com.br/" target="_blank">iak</a>","kov","__i","MySoft","muzgo"
+por terem me influenciado em Assembly e ter me ajudado por muitas vezes e até hoje...
+<strong>irc.freenode.net</strong> nos canais<strong> #asm,#c-br,#lisp-br,#cogubin</strong>.
+
+<strong>"antes que me esqueça feliz pascoa caros leitores desse blog..."
+</strong><!--more-->
+Em "<strong>Assembly</strong>" tem duas sintaxes "<strong>AT&amp;T</strong>" e o "<strong>Intel</strong>" a pouco
+tempo só usava "Intel", mas como minha intenção é só usar
+assembly dentro da "<strong>linguagem C</strong>" tive problemas com sintaxe
+intel, mesmo convertendo etc bugs bizarros com input, então
+<strong>nunca gostei do "nasm"</strong> também,parti para o <a title="o que é GAS ?" href="http://en.wikipedia.org/wiki/GNU_Assembler" target="_blank">GAS </a>e só estou
+usando "AT&amp;T" agora. <strong>Nos muitos livros que li só tinha
+introdução básica, e sempre estava como linguagem de montagem</strong>
+e não como "Assembly" , não acho legal traduzir isso , o
+que anda me ajudando mesmo é ler o "<a title="livro programming from ground up" href="http://programminggroundup.blogspot.com.br/" target="_blank">programming from the ground up</a>"
+do <strong>Jonathan Bartlett</strong>.
+
+Galera tem muito medo de "<strong>Assembly</strong>", eu achava que só os
+<a title="o que é sith ?" href="http://pt.wikipedia.org/wiki/Sith" target="_blank">JEDI SITH</a> podiam codar em "Assembly", hoje eu acho fácil
+claro que se eu tiver com uma tabela dos <strong>registradores e dos
+"JMP" etc... </strong>
+
+Um <a title="entendendo registradores" href="http://en.wikipedia.org/wiki/X86_architecture#x86_registers" target="_blank">registrador</a> em Assembly é uma <strong>área de memoria</strong>
+que referência um <strong>determinado circuito do processador</strong>.
+olhe estas <a title="tabelas opcode" href="http://ref.x86asm.net/" target="_blank">tabelas</a> , caso queira
+<strong>codar com shellcodes</strong> leiam paper do meu amigo <strong>m0nad</strong> do <a title="shellcodes paper do m0nad" href="http://cogubin.leet.la/edicoes/1/ConstruindoShellcodes.txt" target="_blank">cogumelo binario</a>
+
+Algo para ajudar um texto do meu amigo IAK http://code.google.com/p/bugsec/wiki/AssemblyArqComp
+
+bom tabelas dos <strong>registradores,syscalls,aritmética,jmp,access types</strong>
+vou passando no decorrer do "<strong>post</strong>", não é minha ideia ensinar
+"<strong>Assembly</strong>" mesmo porque sou <strong>noob</strong>, ideia é mostrar como usar em
+"<strong>linguagem C</strong>".
+
+vamos la... para tirar a ferrugem um <strong>"ola"</strong>
+
+[sourcecode language="c"]
+# exemplo chamando exit() e write()
+ .section .data
+ output:
+ .ascii "Ola.\n"
+ output_end:
+ .equ len, output_end - output
+ .section .text
+ .globl _start
+ _start:
+# mov com "l" significa que vamos usar 32bit vide tabela
+# eax deixamos o número do syscall que seria 4
+ movl $4, %eax
+# $ cat unistd_32.h | grep write
+# define __NR_write 4  <-- num do syscall
+# número do descriptor 1 para out no primeiro argumento
+ movl $1, %ebx
+# nossa string no segundo argumento
+ movl $output, %ecx
+# tamanho da string no terceiro argumento
+ movl $len, %edx
+# executa  write(1,string,len);
+ int $0x80
+# exit()
+ movl $1, %eax
+# exit(0);
+ movl $0, %ebx
+# executa o exit() fecha...
+ int $0x80
+[/sourcecode]
+
+compilamos,linkamos e executamos
+<strong>
+$ as code.s -o code.o
+$ ld code.o -o code
+$ ./code
+ola.
+$</strong>
+
+OK , para entender a ordem dos registradores na hora de passar
+argumentos para um <strong>syscall</strong>, vejamos se esta tabela pode ajudar
+
+<strong>Ao passar argumento para um syscall</strong>
+
+[sourcecode language="c"]
+ EBX primeiro parametro
+ ECX segundo parametro
+ EDX terceiro parametro
+ ESI quarto parametro
+ EDI quinto parametro
+[/sourcecode]
+
+<strong>se você não entendeu o "movl"</strong>
+<strong>Aritmética básica</strong>
+
+[sourcecode language="c"]
+ Adição: ADD, ADC, INC, XADD, AAA e DAA;
+ Subtracção: SUB, SBB, DEC, AAS e DAS;
+ Multiplicação: MUL, IMUL e AAM;
+ Divisão: DIV, IDIV e AAD.
+ Atribuição: MOV
+[/sourcecode]
+
+<strong> por que ? "l"</strong>
+
+[sourcecode language="c"]
+    b = byte (8 bit)
+    s = short (16 bit integer) or single (32-bit floating point)
+    w = word (16 bit)
+    l = long (32 bit integer or 64-bit floating point)
+    q = quad (64 bit)
+    t = ten bytes (80-bit floating point)
+[/sourcecode]
+
+OK agora sabemos <strong>aritmética básica</strong> vamos fazer uma
+função em Assembly que <strong>calcula o cubo de um número</strong>,
+para assim poder usar na linguagem C
+
+<strong>$ vim cubo.s</strong>
+
+[sourcecode language="c"]
+# função calcula cubo(int x), retorna result int...
+# gcc -o code code.c cubo.s
+.type cubo, @function
+.globl cubo
+
+cubo:
+# pegamos o extended base pointer para pegar argumentos
+ pushl %ebp
+# movemos extented stack pointer para %ebp
+ movl %esp, %ebp
+# passamos primeiro argumento da função para %eax
+ movl 8(%ebp), %eax
+# multiplicamos eax por eax
+ imull %eax, %eax
+# passamos o primeiro argumento para %edx
+ movl 8(%ebp), %edx
+#multiplicamos por eax
+ imull %edx , %eax
+# damos return no resultado
+ movl %ebp, %esp
+ popl %ebp
+ ret
+[/sourcecode]
+
+vamos la então
+<strong>$ vim test.c</strong>
+
+[sourcecode language="c"]
+#include <stdio.h>
+
+int main()
+{
+ printf("%d \n",cubo(6));
+ return 0;
+}
+[/sourcecode]
+
+compilamos e executamos
+<strong>$ gcc -o test test.c test.s
+$ ./test
+216
+$</strong>
+
+<strong>tudo OK !</strong>
+agora como usar assembly dentro do nosso código
+vamos ver como fazer nosso <strong>Inline Assembly</strong>
+
+[sourcecode language="c"]
+/*
+ * agradeço ao amigo __i  da freenode do ##C-br
+   por ter me ajudado neste exemplo...
+*/
+#include <stdio.h>
+
+int
+add(int x, int y)
+{
+ int a = 0;
+// poderia ser asm() ou __asm__() ...
+ __asm__(
+// primeiro argumento para edx
+  "movl 8(%ebp), %edx\n"
+// segundo argumento para eax
+  "movl 12(%ebp), %eax\n"
+// soma os dois e fica em eax
+  "addl %edx, %eax\n"
+// movemos para var "a",
+// se tive-se segunda var como "b" fariamos -8(%ebp)
+  "mov %eax, -4(%ebp)\n"
+ );
+ return a;
+}
+
+int
+main(void)
+{
+ printf("%d\n", add(3,2));
+ return 0;
+}
+[/sourcecode]
+
+<strong>$ gcc -m32 -o code code.c; ./code
+5
+$</strong>
+usamos argumento <strong>-m32</strong> para usar 32bit
+seguindo esse exemplo eu fiz uma <a title="calc cooler" href="https://gist.github.com/2152695" target="_blank">calculadora simples</a>
+
+Agora um exemplo de <strong>Extended Assembly</strong> , vamos fazer
+uma simples condição.
+<strong>$ vim test.c</strong>
+
+[sourcecode language="c"]
+#include <stdio.h>
+
+int main()
+{
+ int a = 3;
+ int b = 51;
+ int result;
+// jle jump if less
+ asm(
+// compara "a" e "b"
+    "cmp %1, %2\n\t"
+// se for menor pula para o label LESS
+    "jl LESS\n\t"
+// result recebe "a"
+    "movl %1, %0\n\t"
+// pula para o fim
+    "jmp end\n"
+    "LESS:\n\t"
+// result recebe "b"
+    "movl %2, %0\n"
+    "end:"
+// passamos os input
+     :"=r"(result)
+     :"r"(a), "r"(b)
+ );
+ printf("valor menor é %d\n", result);
+ return 0;
+}
+[/sourcecode]
+
+<strong>$ gcc -m32 -o code code.c; ./code
+valor menor é 3
+$</strong>
+
+não gosto de usar <strong>extended</strong> vou deixar uma url
+para quem quiser se aprofundar <a title="extended asm" href="http://www.ibiblio.org/gferg/ldp/GCC-Inline-Assembly-HOWTO.html#s5" target="_blank">AQUI</a>
+
+Assim eu fiz uma tabela humilde <strong>com alguns JMP</strong>
+
+[sourcecode language="c"]
++-------------------+----------------------------+-------------------------------+
+|    ASSEMBLY       |      inglês                 |      tradução                |
++-------------------+----------------------------+-------------------------------+
+| ja / jnbe <label> | Above / Not below or equal  | acima/não abaixo ou igual    |
++-------------------+----------------------------+-------------------------------+
+| jae / jnb <label> | Above or equal / Not below  | acima ou igual / não menor   |
++-------------------+------------------------------------------------------------+
+| jb / jnae <label> | Below / Not above or equal  | abaixo / não acima ou igual  |
++-------------------+------------------------------------------------------------+
+| jc <label>        | Carry                       |  carrega                     |
++-------------------+------------------------------------------------------------+
+| je/jz <label>     | Equal / Zero                | igual / zero                 |
++-------------------+------------------------------------------------------------+
+| jnc <label>       | Not Carry                   | não carrega                  |
++-------------------+------------------------------------------------------------+
+| jne/jnz <label>   | Not Equal / Not Zero        | não igual / não zero         |
++--------------------------------------------------------------------------------+
+| jg / jnle <label> | Greater / Not Less or Equal | maior / não menor ou igual   |
++--------------------------------------------------------------------------------+
+| jge / jnl <label> | Greater or Equal / Not Less | maior ou igual / não menor   |
++--------------------------------------------------------------------------------+
+| jl / jnge <label> | Less / Not Greater or Equal | menor / não maior ou igual   |
++--------------------------------------------------------------------------------+
+| jle / jng <label> | Less or Equal / Not Greater | menor ou igual / não maior   |
++--------------------------------------------------------------------------------+
+| jno <label>       | Not overflow
++----------------------------------------------------------------------------+
+| jns <label>       | Not sign (non-negative)
++----------------------------------------------------------------------------+
+| jo <label>        | Overflow
++----------------------------------------------------------------------------+
+| js <label>        | Sign (negative)
++-------------------+--------------------------------------------------------+
+[/sourcecode]
+
+vamos agora um exemplo mais<strong> ZEN</strong>, vamos fazer uma
+função em C com inline ASM para <strong>escrever em um arquivo</strong>.
+
+Antes de codar vamos olhar tabela de access type
+
+[sourcecode language="c"]
+O_RDONLY    00 - Open the file for read-only access.
+O_WRONLY    01 - Open the file for write-only access.
+O_RDWR      02 - Open the file for both read and write access.
+O_CREAT     0100 - Create the file if it does not exist.
+O_EXCL      0200 - When used with O_CREAT, if the file exists, do not open it.
+O_TRUNC     01000 If the file exists and is open in write mode, truncate it to a
+                  length of zero.
+O_APPEND    02000 - Append data to the end of the file.
+O_NONBLOCK  04000 - Open the file in nonblocking mode.
+O_SYNC      010000 - Open the file in synchronous mode (allow only one write
+             at a time).
+O_ASYNC     020000 - Open the file in asynchronous mode (allow multiple
+              writes at a time).
+[/sourcecode]
+
+então vamos usar
+<strong>1001</strong> == O_WRONLY | O_CREAT
+<strong>
+$ vim writefile.c</strong>
+
+[sourcecode language="c"]
+#include <stdio.h>
+
+void
+writefile(char *filename,char *msg,int msglen)
+{
+ __asm__(
+// syscall open("string", O_CREAT | O_WRONLY, 0644);
+   "movl $0x05, %eax\n"
+// nosso primeiro argumento
+   "movl 8(%ebp), %ebx\n"
+// O_CREAT | O_WRONLY
+   "movl $1001, %ecx\n"
+// aqui você já sabe permissões em octal do unix
+   "movl $0644, %edx\n"
+   "int $0x80\n"
+// fd esta em %eax do open(), movemos para o %ebx para o write()
+   "movl %eax, %ebx\n"
+// syscall write(fd, message, messageLen);
+   "movl $0x04, %eax\n"
+// fd em  %ebx para acima
+// segundo argumento
+   "movl 12(%ebp), %ecx\n"
+// 12+4 terceiro argumento nosso
+   "movl 16(%ebp), %edx\n"
+   "int $0x80\n"
+// syscall close(fd);
+   "movl $0x06, %eax\n"
+// fd still in %ebx
+   "int $0x80\n"
+ );
+}
+
+int main()
+{
+ writefile("ola3.txt","lol",3);
+ return 0;
+}
+[/sourcecode]
+
+<strong>$ gcc -o writefile writefile.c; ./writefile; cat ola.txt
+lol
+$
+</strong>
+
+<strong>OK</strong> foi como esperado
+
+Bom caros leitores,<strong> tem muito mais o que estudar com Inline Assembly</strong>,
+espero que fiquem com um bloco do chocolate para quem sabe um dia
+conseguir comer o chocolate todo. <strong>é com exemplos simples que se consegue
+dar passos mais largos</strong>. ;-)
+
+sugiro que leiam <a title="kernel,syscalls..." href="http://coolerlab.wordpress.com/2011/12/27/uma-humilde-visao-de-kernelsyscalls-e-modulos/" target="_blank">este post antigo de kernel,syscall...
+</a>
+<strong>algumas referências: </strong>
+<strong>http://gcc.gnu.org/onlinedocs/gcc/Extended-Asm.html</strong>
+<strong>http://asm.sourceforge.net/articles/rmiyagi-inline-asm.txt</strong>
+
+aloha o/
