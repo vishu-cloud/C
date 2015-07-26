@@ -76,4 +76,6 @@ int main(int argc, char **argv) {
     curl_easy_perform(curl_handle);
   //limpa tudo
     curl_easy_cleanup(curl_handle);
+ return (0);
+ 
 }
