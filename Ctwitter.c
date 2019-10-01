@@ -1,54 +1,4 @@
-/*
 
-GarageCode Genial Creations Hehehe
-http://BotecoUnix.com.br
-
-*função do programa
-Postar no twitter para mostrar um simples funcionamento de um Spider em linguagem C
-usando lib Curl
-
-*requerimentos
- libcurl-dev
- visit this site to many things "http://curl.haxx.se"
-
-*tested with GCC 
- on Unix/Linux/*BSD this: 
-    gcc -o program program.c -l curl; ./program     
-
-Author: Antonio "Cooler_" 
-contact: tony.unix@yahoo.com.br
-license: BSD
-
-visit this site: http://BotecoUnix.com.br
-Real Geeks BotecoUnix
-
-greetz 
-Thanks muzgo,_mlk_ ,m0nad,IAK,Fox,D3lf0 and nibbles. 
-K&R for book ansi C
-
-      .--..--..--..--..--..--.
-    .' \  (`._   (_)     _   \
-  .'    |  '._)         (_)  |
-  \ _.')\      .----..---.   /
-  |(_.'  |    /    .-\-.  \  |
-  \     0|    |   ( O| O) | o|
-   |  _  |  .--.____.'._.-.  |
-   \ (_) | o         -` .-`  |
-    |    \   |`-._ _ _ _ _\ /
-    \    |   |  `. |_||_|   |     Solution!
-    | o  |    \_      \     |     -.   .-.
-    |.-.  \     `--..-'   O |     `.`-' .'
-  _.'  .' |     `-.-'      /-.__   ' .-'
-.' `-.` '.|='=.='=.='=.='=|._/_ `-'.'
-`-._  `.  |________/\_____|    `-.'
-   .'   ).| '=' '='\/ '=' |
-   `._.`  '---------------'
-           //___\   //___\
-             ||       ||
-             ||_.-.   ||_.-.
-            (_.--__) (_.--__)
-
-*/
 #include <stdio.h>
 #include <curl/curl.h>
 #include <curl/types.h>
@@ -74,6 +24,7 @@ int main(int argc, char **argv) {
     curl_easy_setopt(curl_handle, CURLOPT_USERPWD, "Cooler_freenode:1234");
   //envia dados
     curl_easy_perform(curl_handle);
+ //vishu nayak//
   //limpa tudo
     curl_easy_cleanup(curl_handle);
  return (0);
